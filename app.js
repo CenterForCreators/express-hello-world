@@ -1,5 +1,22 @@
+const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const app = express();
+// Serve SDKs from YOUR domain so gateways can't block them
+app.get('/sdk/xumm.min.js', async (req, res) => {
+  const r = await fetch('https://xumm.app/assets/cdn/xumm.min.js');
+  const js = await r.text();
+  res.set('Content-Type', 'application/javascript; charset=utf-8').send(js);
+});
+
+app.get('/sdk/xrpl-latest-min.js', async (req, res) => {
+  const r = await fetch('https://cdnjs.cloudflare.com/ajax/libs/xrpl/2.11.0/xrpl-latest-min.js');
+  const js = await r.text();
+  res.set('Content-Type', 'application/javascript; charset=utf-8').send(js);
+});
+
+// Optional health check
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
 const port = process.env.PORT || 3001;
 
 app.get("/", (req, res) => res.type('html').send(html));
