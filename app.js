@@ -19,6 +19,64 @@ app.get('/sdk/xrpl-latest-min.js', async (req, res) => {
 /* ---------- HEALTH CHECK ---------- */
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
+/* ---------- PAY VIA XAMAN: XRP ---------- */
+app.get('/api/pay-xrp', async (_req, res) => {
+  try {
+    const payload = {
+      txjson: {
+        TransactionType: 'Payment',
+        Destination: process.env.DESTINATION_RS,
+        Amount: String(process.env.AMOUNT_XRP_DROPS || '1000000') // 1 XRP by default (1,000,000 drops)
+      }
+    };
+    const r = await fetch('https://xumm.app/api/v1/platform/payload', {
+      method: 'POST',
+      headers: {
+        'X-API-Key': process.env.XUMM_API_KEY,
+        'X-API-Secret': process.env.XUMM_API_SECRET,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if (j?.next?.always) return res.redirect(j.next.always);
+    return res.status(500).send('Could not create XRP payment payload');
+  } catch (e) {
+    return res.status(500).send('Error creating XRP payment payload');
+  }
+});
+
+/* ---------- PAY VIA XAMAN: CFC (issued currency) ---------- */
+app.get('/api/pay-cfc', async (_req, res) => {
+  try {
+    const payload = {
+      txjson: {
+        TransactionType: 'Payment',
+        Destination: process.env.DESTINATION_RS,
+        Amount: {
+          currency: process.env.CFC_CURRENCY || 'CFC',
+          value: String(process.env.AMOUNT_CFC || '10'),
+          issuer: process.env.CFC_ISSUER
+        }
+      }
+    };
+    const r = await fetch('https://xumm.app/api/v1/platform/payload', {
+      method: 'POST',
+      headers: {
+        'X-API-Key': process.env.XUMM_API_KEY,
+        'X-API-Secret': process.env.XUMM_API_SECRET,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if (j?.next?.always) return res.redirect(j.next.always);
+    return res.status(500).send('Could not create CFC payment payload');
+  } catch (e) {
+    return res.status(500).send('Error creating CFC payment payload');
+  }
+});
+
 /* ---------- ROOT PAGE (Render demo HTML) ---------- */
 const html = `
 <!DOCTYPE html>
@@ -71,3 +129,4 @@ const server = app.listen(port, () => console.log(`Example app listening on port
 server.keepAliveTimeout = 120 * 1000;
 server.headersTimeout = 120 * 1000;
 // ===== end app.js =====
+
