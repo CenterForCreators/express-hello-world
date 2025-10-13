@@ -2,6 +2,22 @@
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const app = express();
+// --- CORS for IPFS gateway origin (minimal) ---
+const ALLOWED = "https://bafybeidep75e2tbvzhvclrvuapcfojsymc4e5mshvnxpscpfzv7p5lrvpq.ipfs.dweb.link"; // exact origin
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin === ALLOWED) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "content-type");
+  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  next();
+});
+// --- end CORS block ---
+
 
 /* ---------- SDK ROUTES (served from YOUR domain) ---------- */
 app.get('/sdk/xumm.min.js', async (req, res) => {
