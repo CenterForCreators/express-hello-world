@@ -6,21 +6,47 @@ const app = express();
 // Parse JSON bodies for POST /api/faucet and /api/join
 app.use(express.json());
 
-// --- CORS for IPFS gateway origin (minimal) ---
-const ALLOWED = "https://bafybeidep75e2tbvzhvclrvuapcfojsymc4e5mshvnxpscpfzv7p5lrvpq.ipfs.dweb.link"; // exact origin
+/* ---------- CORS (allow IPFS origin) ---------- */
+// Exact origin you deploy from (update if you switch to a new domain)
+const EXACT_IPFS_ORIGIN = "https://bafybeidep75e2tbvzhvclrvuapcfojsymc4e5mshvnxpscpfzv7p5lrvpq.ipfs.dweb.link";
+
+// If you want to allow ANY ipfs.dweb.link subdomain (so new CIDs work automatically),
+// set this to true. If you prefer to restrict to ONLY the exact origin above, set to false.
+const ALLOW_ANY_IPFS_SUBDOMAIN = true;
+
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  if (origin === EXACT_IPFS_ORIGIN) return true;
+  // Optional: any *.ipfs.dweb.link subdomain (handy if you redeploy with new CIDs)
+  if (ALLOW_ANY_IPFS_SUBDOMAIN) {
+    try {
+      const host = new URL(origin).hostname;
+      return host.endsWith(".ipfs.dweb.link");
+    } catch { /* ignore */ }
+  }
+  return false;
+}
+
+function setCorsHeaders(res, origin) {
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+}
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin === ALLOWED) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
-    res.setHeader("Access-Control-Allow-Headers", "content-type");
+  if (isAllowedOrigin(origin)) {
+    setCorsHeaders(res, origin);
   }
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method === "OPTIONS") {
+    // IMPORTANT: echo CORS headers on preflight if origin was allowed
+    if (isAllowedOrigin(origin)) setCorsHeaders(res, origin);
+    return res.status(200).end();
+  }
   next();
 });
-// --- end CORS block ---
+/* ---------- end CORS ---------- */
 
 /* ---------- HEALTH CHECK ---------- */
 app.get('/health', (_req, res) => res.json({ ok: true }));
