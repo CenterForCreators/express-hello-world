@@ -1,7 +1,11 @@
-// ===== app.js (paste the whole file) =====
+// ===== app.js (paste this whole file) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const app = express();
+
+// Parse JSON bodies for POST /api/faucet and /api/join
+app.use(express.json());
+
 // --- CORS for IPFS gateway origin (minimal) ---
 const ALLOWED = "https://bafybeidep75e2tbvzhvclrvuapcfojsymc4e5mshvnxpscpfzv7p5lrvpq.ipfs.dweb.link"; // exact origin
 
@@ -10,7 +14,7 @@ app.use((req, res, next) => {
   if (origin === ALLOWED) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
     res.setHeader("Access-Control-Allow-Headers", "content-type");
   }
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -18,22 +22,21 @@ app.use((req, res, next) => {
 });
 // --- end CORS block ---
 
+/* ---------- HEALTH CHECK ---------- */
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
-/* ---------- SDK ROUTES (served from YOUR domain) ---------- */
-app.get('/sdk/xumm.min.js', async (req, res) => {
+/* ---------- SDK ROUTES (optional: serve via your domain) ---------- */
+app.get('/sdk/xumm.min.js', async (_req, res) => {
   const r = await fetch('https://xumm.app/assets/cdn/xumm.min.js');
   const js = await r.text();
   res.type('application/javascript').send(js);
 });
 
-app.get('/sdk/xrpl-latest-min.js', async (req, res) => {
+app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
   const r = await fetch('https://cdnjs.cloudflare.com/ajax/libs/xrpl/2.11.0/xrpl-latest-min.js');
   const js = await r.text();
   res.type('application/javascript').send(js);
 });
-
-/* ---------- HEALTH CHECK ---------- */
-app.get('/health', (_req, res) => res.json({ ok: true }));
 
 /* ---------- PAY VIA XAMAN: XRP ---------- */
 app.get('/api/pay-xrp', async (_req, res) => {
@@ -42,7 +45,7 @@ app.get('/api/pay-xrp', async (_req, res) => {
       txjson: {
         TransactionType: 'Payment',
         Destination: process.env.DESTINATION_RS,
-        Amount: String(process.env.AMOUNT_XRP_DROPS || '1000000') // 1 XRP by default (1,000,000 drops)
+        Amount: String(process.env.AMOUNT_XRP_DROPS || '1000000') // 1 XRP (1,000,000 drops)
       }
     };
     const r = await fetch('https://xumm.app/api/v1/platform/payload', {
@@ -93,6 +96,24 @@ app.get('/api/pay-cfc', async (_req, res) => {
   }
 });
 
+/* ---------- MINIMAL BACKEND FOR YOUR FRONTEND BUTTONS ---------- */
+// Claim faucet: front-end expects { ok: true } on success
+app.post('/api/faucet', (req, res) => {
+  // TODO: implement real faucet logic (XRPL send + rate limit).
+  // For now, return success so the UI works end-to-end.
+  console.log('FAUCET request:', req.body);
+  return res.json({ ok: true });
+});
+
+// Join list: front-end sends { email }; return { ok: true } on success
+app.post('/api/join', (req, res) => {
+  const email = (req.body && req.body.email || '').trim();
+  if (!email) return res.status(400).json({ ok: false, error: 'Missing email' });
+  // TODO: store email in your DB (e.g., Supabase, Postgres, etc.)
+  console.log('JOIN email:', email);
+  return res.json({ ok: true });
+});
+
 /* ---------- ROOT PAGE (Render demo HTML) ---------- */
 const html = `
 <!DOCTYPE html>
@@ -137,7 +158,7 @@ const html = `
 `;
 
 /* ---------- ROUTE TO SERVE THE HTML ---------- */
-app.get("/", (req, res) => res.type('html').send(html));
+app.get("/", (_req, res) => res.type('html').send(html));
 
 /* ---------- START SERVER (ONE listen only) ---------- */
 const port = process.env.PORT || 3001;
@@ -145,4 +166,3 @@ const server = app.listen(port, () => console.log(`Example app listening on port
 server.keepAliveTimeout = 120 * 1000;
 server.headersTimeout = 120 * 1000;
 // ===== end app.js =====
-
