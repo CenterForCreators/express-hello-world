@@ -1,4 +1,4 @@
-// ===== app.js (final faucet backend, with live Xaman Pay) =====
+// ===== app.js (final faucet backend with working Xumm pay) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
@@ -48,21 +48,31 @@ app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
   res.type('application/javascript').send(await r.text());
 });
 
-/* ---------- PAY (live Xaman redirect) ---------- */
+/* ---------- PAY (live Xumm redirect) ---------- */
 const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
-const PAY_DESTINATION = process.env.PAY_DESTINATION || "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"; // your issuer wallet
+const XUMM_API_SECRET = process.env.XUMM_API_SECRET || "";
+const PAY_DESTINATION = process.env.PAY_DESTINATION || "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"; // issuer wallet
 
 async function createXummPayload(payload) {
   const r = await fetch("https://xumm.app/api/v1/platform/payload", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": XUMM_API_KEY
+      "x-api-key": XUMM_API_KEY,
+      "x-api-secret": XUMM_API_SECRET
     },
     body: JSON.stringify(payload)
   });
+
   const j = await r.json();
-  return j.next.always; // redirect link
+  console.log("Xumm payload response:", j);
+
+  if (!j.next || !j.next.always) {
+    console.error("Invalid Xumm API response:", j);
+    throw new Error("Xumm API key/secret invalid or response malformed");
+  }
+
+  return j.next.always; // return redirect link
 }
 
 // Pay CFC
@@ -80,6 +90,7 @@ app.get("/api/pay-cfc", async (_req, res) => {
       },
       options: { submit: true }
     });
+    console.log("Redirecting to:", link);
     return res.redirect(link);
   } catch (e) {
     console.error("pay-cfc error:", e);
@@ -98,6 +109,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
       },
       options: { submit: true }
     });
+    console.log("Redirecting to:", link);
     return res.redirect(link);
   } catch (e) {
     console.error("pay-xrp error:", e);
