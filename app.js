@@ -1,4 +1,4 @@
-// ===== app.js (final faucet backend) =====
+// ===== app.js (final faucet backend, with live Xaman Pay) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
@@ -48,9 +48,62 @@ app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
   res.type('application/javascript').send(await r.text());
 });
 
-/* ---------- PAY (unchanged stubs) ---------- */
-app.get('/api/pay-cfc', async (_req, res) => res.json({ ok: true }));
-app.get('/api/pay-xrp', async (_req, res) => res.json({ ok: true }));
+/* ---------- PAY (live Xaman redirect) ---------- */
+const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
+const PAY_DESTINATION = process.env.PAY_DESTINATION || "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"; // your issuer wallet
+
+async function createXummPayload(payload) {
+  const r = await fetch("https://xumm.app/api/v1/platform/payload", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": XUMM_API_KEY
+    },
+    body: JSON.stringify(payload)
+  });
+  const j = await r.json();
+  return j.next.always; // redirect link
+}
+
+// Pay CFC
+app.get("/api/pay-cfc", async (_req, res) => {
+  try {
+    const link = await createXummPayload({
+      txjson: {
+        TransactionType: "Payment",
+        Destination: PAY_DESTINATION,
+        Amount: {
+          currency: "CFC",
+          issuer: PAY_DESTINATION,
+          value: "10"
+        }
+      },
+      options: { submit: true }
+    });
+    return res.redirect(link);
+  } catch (e) {
+    console.error("pay-cfc error:", e);
+    return res.status(500).json({ ok: false, error: "Xumm error" });
+  }
+});
+
+// Pay XRP
+app.get("/api/pay-xrp", async (_req, res) => {
+  try {
+    const link = await createXummPayload({
+      txjson: {
+        TransactionType: "Payment",
+        Destination: PAY_DESTINATION,
+        Amount: xrpl.xrpToDrops("5")
+      },
+      options: { submit: true }
+    });
+    return res.redirect(link);
+  } catch (e) {
+    console.error("pay-xrp error:", e);
+    return res.status(500).json({ ok: false, error: "Xumm error" });
+  }
+});
 
 /* ---------- BALANCES ---------- */
 app.get('/api/balances', async (req, res) => {
@@ -101,7 +154,6 @@ app.post('/api/faucet', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Invalid account' });
     }
 
-    // 24h rate limit
     const last = grants.get(account) || 0;
     const now = Date.now();
     if (now - last < 24 * 60 * 60 * 1000) {
@@ -119,7 +171,6 @@ app.post('/api/faucet', async (req, res) => {
     const client = new xrpl.Client(process.env.RIPPLED_URL || 'wss://s1.ripple.com');
     await client.connect();
 
-    // Trustline check
     const al = await client.request({ command: 'account_lines', account, ledger_index: 'validated', peer: issuer });
     const hasLine = (al.result?.lines || []).some(l => l.currency === currency);
     if (!hasLine) {
@@ -127,7 +178,6 @@ app.post('/api/faucet', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'No CFC trustline. Please add trustline first.' });
     }
 
-    // Build tx
     const wallet = xrpl.Wallet.fromSeed(seed);
     const tx = {
       TransactionType: "Payment",
@@ -136,7 +186,6 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    // Use autofill + extended ledger window
     const filled = await client.autofill(tx);
     const { result: { ledger_index } } = await client.request({ command: "ledger", ledger_index: "validated" });
     filled.LastLedgerSequence = ledger_index + 20;
