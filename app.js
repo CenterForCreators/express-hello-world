@@ -1,38 +1,16 @@
-// ===== app.js (final faucet backend with working Xumm pay) =====
+// ===== app.js (final faucet backend with working Xumm pay + CORS fix) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
+const cors = require("cors");
 const app = express();
 
+/* ---------- CORS (Unstoppable-friendly) ---------- */
+// This allows your Unstoppable domain to connect to your Render backend.
+// Later you can replace "*" with "https://centerforcreators.nft" if you want to restrict it.
+app.use(cors({ origin: "*" }));
+
 app.use(express.json());
-
-/* ---------- CORS ---------- */
-const EXACT_IPFS_ORIGIN = process.env.EXACT_IPFS_ORIGIN || "";
-const UD_ORIGIN = process.env.UD_ORIGIN || "";
-const ALLOW_ANY_IPFS_SUBDOMAIN = true;
-
-function isAllowedOrigin(origin) {
-  if (!origin) return false;
-  if (origin === EXACT_IPFS_ORIGIN) return true;
-  if (UD_ORIGIN && origin === UD_ORIGIN) return true;
-  if (ALLOW_ANY_IPFS_SUBDOMAIN) {
-    try { return new URL(origin).hostname.endsWith(".ipfs.dweb.link"); } catch {}
-  }
-  return false;
-}
-
-function setCorsHeaders(res, origin) {
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
-}
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (isAllowedOrigin(origin)) setCorsHeaders(res, origin);
-  next();
-});
 
 /* ---------- HEALTH ---------- */
 app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -234,3 +212,4 @@ server.keepAliveTimeout = 120000;
 server.headersTimeout = 120000;
 
 // ===== end app.js =====
+
