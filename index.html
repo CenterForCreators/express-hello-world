@@ -1,5 +1,3 @@
-<!-- force rebuild -->
-
 <!DOCTYPE html>
 
 <html>
@@ -1483,6 +1481,91 @@ function checkCaptcha(){
   });
 })();
 </script>
+
+<script>
+  const xumm = new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');
+  let connectedAccount = null;
+
+  async function updateBalances(account) {
+    try {
+      const res = await fetch(`https://cfc-faucet.onrender.com/api/balances?account=${account}`);
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('xrp-balance').textContent = data.xrp ?? '-';
+        document.getElementById('cfc-balance').textContent = data.cfc ?? '-';
+      }
+    } catch (e) {
+      console.error('Balance update error', e);
+    }
+  }
+
+  async function connectWallet() {
+    try {
+      const { me } = await xumm.authorize();
+      connectedAccount = me.account;
+      localStorage.setItem('xummAccount', connectedAccount);
+      document.getElementById('wallet-address').textContent = `Connected: ${connectedAccount}`;
+      await updateBalances(connectedAccount);
+    } catch (e) {
+      alert('Wallet connection failed.');
+    }
+  }
+
+  // Restore wallet on load
+  window.addEventListener('load', async () => {
+    const saved = localStorage.getItem('xummAccount');
+    if (saved) {
+      connectedAccount = saved;
+      document.getElementById('wallet-address').textContent = `Connected: ${connectedAccount}`;
+      await updateBalances(connectedAccount);
+    }
+    generateCaptcha();
+  });
+
+  function generateCaptcha() {
+    const a = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    document.getElementById('captcha-question').textContent = `${a} + ${b} = ?`;
+    document.getElementById('captcha-question').dataset.answer = a + b;
+  }
+
+  async function claimFaucet() {
+    if (!connectedAccount) {
+      alert('Please connect your wallet first.');
+      return;
+    }
+
+    const captchaAns = document.getElementById('captcha-answer').value.trim();
+    const correct = document.getElementById('captcha-question').dataset.answer;
+
+    if (captchaAns !== correct) {
+      alert('Incorrect captcha. Try again.');
+      generateCaptcha();
+      return;
+    }
+
+    document.getElementById('faucet-result').textContent = 'Sending faucet...';
+
+    try {
+      const res = await fetch('https://cfc-faucet.onrender.com/api/faucet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account: connectedAccount, captcha_ok: true })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('faucet-result').textContent = 'Success! Faucet sent.';
+        await updateBalances(connectedAccount);
+      } else {
+        document.getElementById('faucet-result').textContent = data.error || 'Faucet failed.';
+      }
+    } catch (e) {
+      document.getElementById('faucet-result').textContent = 'Error sending faucet.';
+    }
+    generateCaptcha();
+  }
+</script>
+
 </body>
 <script>
 (function(){
