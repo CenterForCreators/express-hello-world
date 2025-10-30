@@ -5,10 +5,17 @@ const xrpl = require("xrpl");
 const cors = require("cors");
 const app = express();
 
-/* ---------- CORS (Unstoppable-friendly) ---------- */
-// This allows your Unstoppable domain to connect to your Render backend.
-// Later you can replace "*" with "https://centerforcreators.nft" if you want to restrict it.
-app.use(cors({ origin: "*" }));
+/* ---------- CORS (Allow GitHub + Unstoppable + IPFS) ---------- */
+app.use(cors({
+  origin: [
+    "https://centerforcreators.github.io",
+    "https://centerforcreators.nft",
+    "https://cf-ipfs.com",
+    "https://dweb.link"
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 app.use(express.json());
 
@@ -212,4 +219,3 @@ server.keepAliveTimeout = 120000;
 server.headersTimeout = 120000;
 
 // ===== end app.js =====
-
