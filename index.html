@@ -930,7 +930,10 @@ function checkCaptcha(){
 
   if(claimBtn && !claimBtn.__wired){
     claimBtn.__wired = true;
-    if(isNaN(ans) || ans !== (a+b)){
+    claimBtn.addEventListener('click', async function(){
+      if(capQ && capA){
+        const ans = parseInt(capA.value||'NaN',10);
+        if(isNaN(ans) || ans !== (a+b)){
           if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
           return;
         }
@@ -1079,7 +1082,12 @@ function checkCaptcha(){
   // Hook faucet Claim button to pass account
   var claimBtn = document.getElementById('claimBtn');
   if(claimBtn){
-    }
+    claimBtn.addEventListener('click', function(){
+      // If page has existing handler, we don't override; we look for a known status element to update after
+      // Instead, we intercept fetch by exposing CONFIG.FAUCET_ENDPOINT and expecting app code to read CONFIG
+      // No-op here.
+    });
+  }
 
   // Patch Claim to include account if site uses a global sendClaim function
   if (typeof window.sendClaim==='function'){
@@ -1155,7 +1163,13 @@ function checkCaptcha(){
   // CLAIM handler: reuse existing connection, do not force second sign-in
   const claimBtn = document.getElementById('claimBtn');
   if(claimBtn){
-    }
+    claimBtn.addEventListener('click', async function(){
+      try{
+        const acct = connectedAccount;
+        if(!acct){
+          // if not connected yet, try to connect once
+          await connectXumm();
+        }
         const address = connectedAccount;
         if(!address){
           toast && toast("Please connect Xaman first.");
@@ -1260,7 +1274,9 @@ function checkCaptcha(){
   }
 
   if(claimBtn){
-    }
+    claimBtn.addEventListener('click', async function(){
+      try{
+        if(!isValidR(connectedAccount)){ await connectXumm(); }
         if(!isValidR(connectedAccount)){ return; }
         const payload = { account: connectedAccount, captcha_ok: true };
         const ep = CONFIG.FAUCET_ENDPOINT || "https://cfc-faucet.onrender.com/api/faucet";
@@ -1432,6 +1448,7 @@ function checkCaptcha(){
     initXumm();
     generateCaptchaIfNeeded();
     if (connectBtn) connectBtn.addEventListener('click', handleConnect);
+    if (claimBtn) claimBtn.addEventListener('click', handleClaim);
     // Disable claim until connected
     if (claimBtn) claimBtn.setAttribute('disabled', 'disabled');
   });
@@ -1516,75 +1533,6 @@ function checkCaptcha(){
   if (cbtn) cbtn.addEventListener('click', (e)=>{ e.preventDefault(); claim(); });
 })();
 </script>
-
-<script>
-(function(){
-  function gid(id){ return document.getElementById(id); }
-  const claimBtn = gid('claimBtn');
-  const claimStatus = gid('claimStatus');
-  const claimSpin = gid('claimSpin');
-  const capQ = gid('captchaQ');
-  const capA = gid('captchaA');
-
-  function isValidR(a){ return typeof a==='string' && /^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(a); }
-
-  async function doClaim(){
-    try{
-      if (typeof connectedAccount === 'undefined' || !isValidR(connectedAccount)){
-        if (typeof connectXumm === 'function') { await connectXumm(); }
-      }
-      if (!isValidR(connectedAccount)){
-        if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Please connect your wallet.'; }
-        return;
-      }
-      // captcha check
-      if (capQ && capA && capQ.dataset && capQ.dataset.answer){
-        const ans = parseInt((capA.value||'').trim(),10);
-        const correct = parseInt(capQ.dataset.answer,10);
-        if (isNaN(ans) || ans !== correct){
-          if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
-          return;
-        }
-      }
-
-      if (claimStatus){ claimStatus.className='status warn'; claimStatus.textContent='Sending…'; }
-      if (claimSpin){ claimSpin.style.display='inline-block'; }
-
-      const url = 'https://cfc-faucet.onrender.com/api/faucet';
-      const payload = { account: connectedAccount, captcha_ok: true };
-
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const j = await r.json().catch(()=>({ ok:false, error:'Bad response' }));
-
-      if (j && j.ok){
-        if (claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ Success! Faucet sent.'; }
-        try{ if (typeof connectXRPLAndLoadBalances==='function') connectXRPLAndLoadBalances(connectedAccount); }catch(e){}
-      }else if (j && j.error && j.error.includes('24h')){
-        if (claimStatus){ claimStatus.className='status warn'; claimStatus.textContent='⚠️ Faucet already claimed. Try again in 24 hours.'; }
-      }else{
-        if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='⚠️ ' + (j.error || 'Faucet failed.'); }
-      }
-    }catch(e){
-      if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Error sending faucet.'; }
-    }finally{
-      if (claimSpin){ claimSpin.style.display='none'; }
-      if (typeof generateCaptcha==='function') try{ generateCaptcha(); }catch(e){}
-    }
-  }
-
-  // Remove any pre-existing event listeners by cloning the button
-  if (claimBtn){
-    const clone = claimBtn.cloneNode(true);
-    claimBtn.parentNode.replaceChild(clone, claimBtn);
-    clone.addEventListener('click', function(e){ e.preventDefault(); doClaim(); });
-  }
-})();
-</script>
-
 </body>
 <script>
 (function(){
@@ -1632,7 +1580,10 @@ function checkCaptcha(){
   // Wire CLAIM if a button exists and not already wired
   if (claimBtn && !claimBtn.__wired){
     claimBtn.__wired = true;
-    if (isNaN(ans) || ans !== (a+b)){
+    claimBtn.addEventListener('click', async function(){
+      if (capQ && capA){
+        var ans = parseInt(capA.value||'NaN',10);
+        if (isNaN(ans) || ans !== (a+b)){
           if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
           return;
         }
@@ -1874,7 +1825,9 @@ function checkCaptcha(){
   }
   if(claimBtn){
     claimBtn.onclick = null;
-    if(typeof checkCaptcha==='function' ? checkCaptcha() : true){
+    claimBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      if(typeof checkCaptcha==='function' ? checkCaptcha() : true){
         if(typeof claimFaucet==='function') claimFaucet();
       }
     });
