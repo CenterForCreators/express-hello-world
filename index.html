@@ -362,7 +362,7 @@ catch(e){}
   try{ if(typeof newCaptcha==='function') newCaptcha(); }catch(e){}
 
       const msg = document.getElementById('claimMsg')
-      if (!connectedAccount) { msg.textContent = 'Connect your wallet first (top right).'; return }
+      if (!connectedAccount || connectedAccount === 'undefined' || connectedAccount === null) { msg.textContent = 'Connect your wallet first (top right).'; return }
       msg.textContent = 'Verifying…'
       try {
         const signin = await xumm.payload.createAndSubscribe({ txjson: { TransactionType: 'SignIn' } }, () => {})
@@ -1405,7 +1405,7 @@ function checkCaptcha(){
 
   async function handleClaim() {
     try {
-      if (!connectedAccount) {
+      if (!connectedAccount || connectedAccount === 'undefined' || connectedAccount === null) {
         setStatus('Please connect your wallet first.');
         if (connectBtn) connectBtn.focus();
         return;
@@ -1504,7 +1504,7 @@ function checkCaptcha(){
 
   async function claim() {
     const s = document.getElementById('claimStatus');
-    if (!connectedAccount) {
+    if (!connectedAccount || connectedAccount === 'undefined' || connectedAccount === null) {
       if (s) s.textContent = 'Connect Wallet First';
       return;
     }
@@ -1845,7 +1845,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const connectBtn = document.getElementById("connect-btn");
     const walletAddr = document.getElementById("wallet-address");
     if (connectBtn) connectBtn.textContent = "Connected";
-    if (walletAddr) walletAddr.textContent = `Connected: ${connectedAccount}`;
+    if (walletAddr) walletAddr.textContent = connectedAccount ? connectedAccount ? `Connected Wallet: ${connectedAccount}` : '' : '';
     updateBalances(savedAccount);
   }
 });
