@@ -1483,87 +1483,83 @@ function checkCaptcha(){
 </script>
 
 <script>
-  const xumm = new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');
+(() => {
   let connectedAccount = null;
 
-  async function updateBalances(account) {
+  async function restore() {
     try {
-      const res = await fetch(`https://cfc-faucet.onrender.com/api/balances?account=${account}`);
-      const data = await res.json();
-      if (data.ok) {
-        document.getElementById('xrp-balance').textContent = data.xrp ?? '-';
-        document.getElementById('cfc-balance').textContent = data.cfc ?? '-';
+      const saved = localStorage.getItem('xummAccount');
+      if (saved) {
+        connectedAccount = saved;
+        const el = document.getElementById('connectedAddress');
+        if (el) el.textContent = saved;
+        if (typeof fetchBalances === 'function') {
+          await fetchBalances(saved);
+        }
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  async function connectNow() {
+    try {
+      if (typeof ensureConnected === 'function') {
+        const acc = await ensureConnected();
+        if (acc) {
+          connectedAccount = acc;
+          localStorage.setItem('xummAccount', acc);
+          const el = document.getElementById('connectedAddress');
+          if (el) el.textContent = acc;
+          if (typeof fetchBalances === 'function') {
+            await fetchBalances(acc);
+          }
+        }
+      } else if (window.xumm && typeof xumm.authorize === 'function') {
+        const { me } = await xumm.authorize();
+        connectedAccount = me.account;
+        localStorage.setItem('xummAccount', connectedAccount);
+        const el = document.getElementById('connectedAddress');
+        if (el) el.textContent = connectedAccount;
+        if (typeof fetchBalances === 'function') {
+          await fetchBalances(connectedAccount);
+        }
       }
     } catch (e) {
-      console.error('Balance update error', e);
+      console.error('Connect error', e);
+      const s = document.getElementById('claimStatus');
+      if (s) s.textContent = 'Connection failed. Please try again.';
     }
   }
 
-  async function connectWallet() {
-    try {
-      const { me } = await xumm.authorize();
-      connectedAccount = me.account;
-      localStorage.setItem('xummAccount', connectedAccount);
-      document.getElementById('wallet-address').textContent = `Connected: ${connectedAccount}`;
-      await updateBalances(connectedAccount);
-    } catch (e) {
-      alert('Wallet connection failed.');
-    }
-  }
-
-  // Restore wallet on load
-  window.addEventListener('load', async () => {
-    const saved = localStorage.getItem('xummAccount');
-    if (saved) {
-      connectedAccount = saved;
-      document.getElementById('wallet-address').textContent = `Connected: ${connectedAccount}`;
-      await updateBalances(connectedAccount);
-    }
-    generateCaptcha();
-  });
-
-  function generateCaptcha() {
-    const a = Math.floor(Math.random() * 10) + 1;
-    const b = Math.floor(Math.random() * 10) + 1;
-    document.getElementById('captcha-question').textContent = `${a} + ${b} = ?`;
-    document.getElementById('captcha-question').dataset.answer = a + b;
-  }
-
-  async function claimFaucet() {
+  async function claim() {
+    const s = document.getElementById('claimStatus');
     if (!connectedAccount) {
-      alert('Please connect your wallet first.');
+      if (s) s.textContent = 'Connect Wallet First';
       return;
     }
-
-    const captchaAns = document.getElementById('captcha-answer').value.trim();
-    const correct = document.getElementById('captcha-question').dataset.answer;
-
-    if (captchaAns !== correct) {
-      alert('Incorrect captcha. Try again.');
-      generateCaptcha();
-      return;
-    }
-
-    document.getElementById('faucet-result').textContent = 'Sending faucet...';
-
     try {
-      const res = await fetch('https://cfc-faucet.onrender.com/api/faucet', {
+      const resp = await fetch('https://cfc-faucet.onrender.com/api/faucet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: connectedAccount, captcha_ok: true })
       });
-      const data = await res.json();
+      const data = await resp.json();
       if (data.ok) {
-        document.getElementById('faucet-result').textContent = 'Success! Faucet sent.';
-        await updateBalances(connectedAccount);
+        if (s) s.textContent = 'Success! Faucet sent.';
+        if (typeof fetchBalances === 'function') await fetchBalances(connectedAccount);
       } else {
-        document.getElementById('faucet-result').textContent = data.error || 'Faucet failed.';
+        if (s) s.textContent = data.error || 'Faucet failed.';
       }
     } catch (e) {
-      document.getElementById('faucet-result').textContent = 'Error sending faucet.';
+      if (s) s.textContent = 'Network error.';
     }
-    generateCaptcha();
   }
+
+  window.addEventListener('load', restore);
+  const btn = document.getElementById('connectBtn');
+  if (btn) btn.addEventListener('click', connectNow);
+  const cbtn = document.getElementById('claimBtn');
+  if (cbtn) cbtn.addEventListener('click', (e)=>{ e.preventDefault(); claim(); });
+})();
 </script>
 
 </body>
