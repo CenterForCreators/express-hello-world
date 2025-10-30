@@ -87,7 +87,7 @@
 <span class="muted">XRP:</span><span id="wb_xrp">—</span>
 <span class="muted">CFC:</span><span id="wb_cfc">—</span>
 <button class="btn small" id="wb_trust" style="display:none" type="button">Add CFC Trustline</button>
-<div id="wallet-label">Connected Wallet:</div><span id="connectedAddress">Not connected</span></div>
+<span id="connectedAddress">Not connected</span></div>
 <div class="card" style="margin-bottom:16px">
 <div class="row" style="justify-content:space-between">
 <div>
@@ -128,26 +128,7 @@
 <button class="btn secondary" id="navPurchases">My Purchases</button>
 <button class="btn secondary" id="navRedeem">Redeem</button>
 </div>
-<div class="card" style="margin-bottom:16px">
-<div class="row">
-<div class="tag" id="status">Wallet: Disconnected</div>
-<div class="muted" id="address" style="word-break:break-all"></div>
-</div>
-<div class="error" id="errorBox"></div>
-<div class="row" style="margin-top:10px">
-<div class="tag">CFC Balance</div>
-<div id="cfcBalance"><span id="cfcBal">—</span></div>
-</div>
-<div class="row" style="margin-top:10px">
-<div class="tag">XRP Balance</div>
-<div id="xrpBalance"><span id="xrpBal">—</span></div>
-</div>
-<div class="row" id="trustlineRow" style="margin-top:10px; display:none">
-<div class="tag">CFC Trustline</div>
-<div class="muted">Missing</div>
-<button class="btn small" id="addTrustline" style="margin-left:auto">Add Trustline</button>
-</div>
-</div>
+
 <section id="view-market">
 <div class="grid">
 <div class="card">
@@ -204,19 +185,11 @@
 </div>
 </section>
 <section id="view-purchases" style="display:none">
-<div class="card" style="margin-bottom:12px"><strong>Your NFTs issued by CFC</strong><div class="muted">Connected wallet’s holdings filtered by CFC issuer.</div></div>
+
 <div class="grid" id="purchasesGrid"></div>
 </section>
 <section id="view-redeem" style="display:none">
-<div class="card">
-<h3 style="margin:0 0 10px">Verify Ownership to Redeem</h3>
-<p class="muted">Enter an NFT Token ID from your wallet, or pick one from <em>My Purchases</em>. We’ll verify on the XRP Ledger that your connected wallet currently holds it.</p>
-<div class="row" style="margin-top:10px">
-<input id="redeemTokenId" placeholder="Paste NFTokenID" style="flex:1"/>
-<button class="btn" id="redeemCheck">Verify</button>
-</div>
-<div class="muted" id="redeemResult" style="margin-top:10px"></div>
-</div>
+
 </section>
 <footer>
 <p>Powered by the CFC Token on the XRP Ledger. Secured by Xaman • App: Center for Creators NFT Market. <a href="https://centerforcreators.com" rel="noreferrer" target="_blank">CenterForCreators.com</a></p>
@@ -1481,7 +1454,6 @@ function checkCaptcha(){
   });
 })();
 </script>
-
 <script>
 (() => {
   let connectedAccount = null;
@@ -1561,7 +1533,6 @@ function checkCaptcha(){
   if (cbtn) cbtn.addEventListener('click', (e)=>{ e.preventDefault(); claim(); });
 })();
 </script>
-
 </body>
 <script>
 (function(){
