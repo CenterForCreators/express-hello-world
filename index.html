@@ -53,14 +53,34 @@
       issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
 };
   
-// ✅ QR Reconnect Fix — ensures automatic reconnection if session exists
-window.addEventListener('load', async () => {
+
+// [removed old reconnect patch start]
   try {
     if (window.xumm) {
       const state = await xumm.state();
       if (state?.me?.account) {
         console.log('Restoring session for', state.me.account);
         document.dispatchEvent(new CustomEvent('walletConnected', { detail: state.me.account }));
+      }
+    }
+  } catch (err) {
+    console.warn('QR reconnect check failed:', err);
+  }
+});
+
+
+// ✅ Refined QR Reconnect Fix — restore wallet & claim functionality correctly
+window.addEventListener('load', async () => {
+  try {
+    if (window.xumm) {
+      const state = await xumm.state();
+      if (state?.me?.account) {
+        console.log('Restoring XUMM session for', state.me.account);
+        connectedAccount = state.me.account;
+        document.getElementById('wallet-address').textContent = `Connected Account: ${connectedAccount}`;
+        document.getElementById('connect-wallet').style.display = 'none';
+        document.getElementById('disconnect-wallet').style.display = 'inline-block';
+        await updateBalances(connectedAccount);
       }
     }
   } catch (err) {
