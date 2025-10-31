@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html>
@@ -53,7 +52,23 @@
       currencyCode: 'CFC',
       issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
 };
-  </script>
+  
+// ✅ QR Reconnect Fix — ensures automatic reconnection if session exists
+window.addEventListener('load', async () => {
+  try {
+    if (window.xumm) {
+      const state = await xumm.state();
+      if (state?.me?.account) {
+        console.log('Restoring session for', state.me.account);
+        document.dispatchEvent(new CustomEvent('walletConnected', { detail: state.me.account }));
+      }
+    }
+  } catch (err) {
+    console.warn('QR reconnect check failed:', err);
+  }
+});
+
+</script>
 <script>
     // Helpers
     function $(sel){ return document.querySelector(sel); }
@@ -1639,19 +1654,6 @@ function checkCaptcha(){
   setInterval(updateWallet, 4000);
 })();
 </script>
-
-<script>
-// Auto-resize iframe height when embedded (no scrollbars)
-window.addEventListener('load', () => {
-  const sendHeight = () => {
-    const height = document.documentElement.scrollHeight;
-    parent.postMessage({ cfcFrameHeight: height }, '*');
-  };
-  sendHeight();
-  window.addEventListener('resize', sendHeight);
-});
-</script>
-
 </body>
 <script>
 (function(){
