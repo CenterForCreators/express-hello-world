@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html>
@@ -1638,6 +1639,19 @@ function checkCaptcha(){
   setInterval(updateWallet, 4000);
 })();
 </script>
+
+<script>
+// Auto-resize iframe height when embedded (no scrollbars)
+window.addEventListener('load', () => {
+  const sendHeight = () => {
+    const height = document.documentElement.scrollHeight;
+    parent.postMessage({ cfcFrameHeight: height }, '*');
+  };
+  sendHeight();
+  window.addEventListener('resize', sendHeight);
+});
+</script>
+
 </body>
 <script>
 (function(){
