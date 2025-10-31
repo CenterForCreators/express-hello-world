@@ -52,43 +52,7 @@
       currencyCode: 'CFC',
       issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
 };
-  
-
-// [removed old reconnect patch start]
-  try {
-    if (window.xumm) {
-      const state = await xumm.state();
-      if (state?.me?.account) {
-        console.log('Restoring session for', state.me.account);
-        document.dispatchEvent(new CustomEvent('walletConnected', { detail: state.me.account }));
-      }
-    }
-  } catch (err) {
-    console.warn('QR reconnect check failed:', err);
-  }
-});
-
-
-// ✅ Refined QR Reconnect Fix — restore wallet & claim functionality correctly
-window.addEventListener('load', async () => {
-  try {
-    if (window.xumm) {
-      const state = await xumm.state();
-      if (state?.me?.account) {
-        console.log('Restoring XUMM session for', state.me.account);
-        connectedAccount = state.me.account;
-        document.getElementById('wallet-address').textContent = `Connected Account: ${connectedAccount}`;
-        document.getElementById('connect-wallet').style.display = 'none';
-        document.getElementById('disconnect-wallet').style.display = 'inline-block';
-        await updateBalances(connectedAccount);
-      }
-    }
-  } catch (err) {
-    console.warn('QR reconnect check failed:', err);
-  }
-});
-
-</script>
+  </script>
 <script>
     // Helpers
     function $(sel){ return document.querySelector(sel); }
@@ -1672,6 +1636,80 @@ function checkCaptcha(){
   }
   setTimeout(updateWallet, 1000);
   setInterval(updateWallet, 4000);
+})();
+</script>
+
+<script>
+(function () {
+  try {
+    if (typeof Xumm === 'undefined') return;
+    window.xumm = window.xumm || new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');
+
+    var btn = document.getElementById('connect-wallet') || document.querySelector('[data-connect-wallet]');
+    if (!btn) return;
+    var addrEl = document.getElementById('wallet-address') || document.querySelector('[data-wallet-address]');
+
+    function setUI(connected, account) {
+      try {
+        btn.textContent = connected ? 'Disconnect XUMM Wallet' : 'Connect XUMM Wallet';
+        if (addrEl) addrEl.textContent = connected && account ? 'Connected Account: ' + account : '';
+      } catch (e) {}
+    }
+
+    async function doConnect() {
+      try {
+        try { localStorage.removeItem('xummAccount'); } catch (e) {}
+        const auth = await window.xumm.authorize();
+        if (!auth || !auth.me || !auth.me.account) { setUI(false); return; }
+        window.connectedAccount = auth.me.account;
+        try { localStorage.setItem('xummAccount', window.connectedAccount); } catch (e) {}
+        setUI(true, window.connectedAccount);
+        if (typeof window.updateBalances === 'function') {
+          try { await window.updateBalances(window.connectedAccount); } catch (e) {}
+        }
+      } catch (e) {
+        setUI(false);
+      }
+    }
+
+    async function doDisconnect() {
+      try { if (window.xumm.logout) await window.xumm.logout(); } catch (e) {}
+      window.connectedAccount = null;
+      try { localStorage.removeItem('xummAccount'); } catch (e) {}
+      setUI(false);
+    }
+
+    btn.addEventListener('click', function (ev) {
+      var label = (btn.textContent || '').toLowerCase();
+      if (label.includes('disconnect')) { ev.preventDefault(); doDisconnect(); }
+      else { ev.preventDefault(); doConnect(); }
+    }, { capture: true });
+
+    setUI(false);
+
+    (async function restore() {
+      try {
+        if (window.xumm && typeof window.xumm.state === 'function') {
+          const s = await window.xumm.state();
+          if (s && s.me && s.me.account) window.connectedAccount = s.me.account;
+        }
+      } catch (e) {}
+      if (!window.connectedAccount) {
+        try {
+          var saved = localStorage.getItem('xummAccount');
+          if (saved && /^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(saved)) window.connectedAccount = saved;
+        } catch (e) {}
+      }
+      if (window.connectedAccount) {
+        setUI(true, window.connectedAccount);
+        if (typeof window.updateBalances === 'function') {
+          try { await window.updateBalances(window.connectedAccount); } catch (e) {}
+        }
+      }
+    })();
+  } catch (e) {
+    console.warn('XUMM patch failed:', e);
+  }
 })();
 </script>
 </body>
