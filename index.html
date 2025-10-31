@@ -1533,6 +1533,111 @@ function checkCaptcha(){
   if (cbtn) cbtn.addEventListener('click', (e)=>{ e.preventDefault(); claim(); });
 })();
 </script>
+
+<!-- Injected: targeted fixes overlay -->
+<script>
+(function(){
+  function gid(id){ return document.getElementById(id); }
+  function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+  function acct(){
+    if (typeof window.connectedAccount === 'string' && window.connectedAccount) return window.connectedAccount;
+    try{ const s = localStorage.getItem('xummAccount'); if (s) return s; }catch(e){}
+    return "";
+  }
+  function isR(a){ return typeof a==='string' && /^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(a); }
+
+  function updateWallet(){
+    var a = acct();
+    var targets = [gid('wallet-address'), gid('connectedAddress'), gid('addrBadge'), gid('walletbar')].filter(Boolean);
+    targets.forEach(function(el){
+      try{ el.innerHTML = el.innerHTML.replace('[object Promise]','').replace(/XRP:\s*—?/gi,'').replace(/CFC:\s*—?/gi,''); }catch(e){}
+      el.textContent = (isR(a) ? 'Connected Account: ' + a : 'Wallet Status: CONNECT');
+    });
+    var btn = gid('connect-wallet') || gid('connectXumm') || gid('xummConnect') || gid('connectBtn');
+    if (btn) btn.textContent = isR(a) ? 'Disconnect XUMM Wallet' : 'Connect XUMM Wallet';
+  }
+
+  function connectToggle(){
+    var btn = gid('connect-wallet') || gid('connectXumm') || gid('xummConnect') || gid('connectBtn');
+    if (!btn) return;
+    var clone = btn.cloneNode(true);
+    btn.parentNode.replaceChild(clone, btn);
+    clone.addEventListener('click', async function(e){
+      e.preventDefault();
+      var a = acct();
+      if (isR(a)){
+        try{ localStorage.removeItem('xummAccount'); }catch(e){}
+        if (typeof window.connectedAccount !== 'undefined') window.connectedAccount = null;
+        updateWallet();
+        return;
+      }
+      try{
+        if (window.xumm && typeof window.xumm.authorize === 'function'){
+          const { me } = await window.xumm.authorize();
+          if (me && me.account){
+            window.connectedAccount = me.account;
+            try{ localStorage.setItem('xummAccount', me.account); }catch(e){}
+            updateWallet();
+          }
+        } else {
+          alert('XUMM SDK not loaded.');
+        }
+      }catch(_){ alert('Wallet connection failed.'); }
+    });
+  }
+
+  // Suppress redundant "connect wallet" alerts if already connected
+  (function(){
+    var nat = window.alert;
+    window.alert = function(msg){
+      if (isR(acct()) && typeof msg === 'string' && /connect wallet/i.test(msg)) return;
+      return nat.apply(window, arguments);
+    };
+  })();
+
+  // Hide "Invalid Account" text near claim and "Server: Waiting for URL."
+  function cleanTexts(){
+    $all('body *').forEach(function(n){
+      var t = (n.innerText || n.textContent || '').trim();
+      if (/invalid account/i.test(t) || /^server:\s*waiting for url\.?$/i.test(t)){
+        n.style.display = 'none';
+      }
+    });
+    // Also hide standalone "XRP: —" / "CFC: —"
+    $all('body *').forEach(function(n){
+      var t = (n.innerText || n.textContent || '').trim();
+      if (/^(XRP|CFC)\s*:\s*—$/i.test(t)) n.style.display = 'none';
+    });
+  }
+
+  // Auto-clear success message after 5s
+  (function(){
+    var nodes = [gid('faucet-result'), gid('claimStatus')].filter(Boolean);
+    nodes.forEach(function(node){
+      var obs = new MutationObserver(function(){
+        var txt = (node.textContent || '').toLowerCase();
+        if (txt.includes('success') && txt.includes('faucet')){
+          setTimeout(function(){ node.textContent=''; }, 5000);
+        }
+      });
+      obs.observe(node, { childList:true, subtree:true, characterData:true });
+    });
+  })();
+
+  function init(){
+    updateWallet();
+    connectToggle();
+    cleanTexts();
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  setTimeout(updateWallet, 1000);
+  setInterval(updateWallet, 4000);
+})();
+</script>
 </body>
 <script>
 (function(){
