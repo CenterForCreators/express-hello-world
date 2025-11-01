@@ -1854,7 +1854,7 @@ if (joinHandlerTarget && !joinHandlerTarget.__wired){
             var code = (window.CONFIG && (CONFIG.currencyCode || CONFIG.CFC_CODE)) || 'CFC';
             statusEl.className='status ok'; statusEl.textContent='✅ ' + amt + ' ' + code + ' sent!';
           } else {
-            statusEl.className='status err'; statusEl.textContent=(j && j.error) || 'Request failed';
+            statusEl.className='status err';
           }
         }
       }catch(e){
@@ -1884,33 +1884,58 @@ if (joinHandlerTarget && !joinHandlerTarget.__wired){
       join.appendChild(container);
     }
   }
-// Wire Join submit
-function wireJoin(){
+
+// ✅ Wire Join to Google Sheets webhook
+function wireJoin() {
   var form = document.getElementById('joinForm');
   if (!form || form.__wired) return;
   form.__wired = true;
-  form.addEventListener('submit', async function(ev){
+
+  form.addEventListener('submit', async function (ev) {
     ev.preventDefault();
+
     var emailEl = document.getElementById('joinEmail');
     var statusEl = document.getElementById('joinStatus');
     var email = (emailEl && emailEl.value || '').trim();
-    if(!email){ if(statusEl){ statusEl.className='status err'; statusEl.textContent='Enter an email'; } return; }
-    if(statusEl){ statusEl.className='status warn'; statusEl.textContent='Submitting…'; }
-    try{
-      const res = await fetch('https://script.google.com/macros/s/AKfycbzf9GCeNIPl4SwHAkImpeP_3udLzG6QzoSt4HAl_dd-bKETz9CmbDkdTjnKo6XpPFj1/exec', {
-        method:'POST',
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      if (statusEl) {
+        statusEl.className = 'status err';
+        statusEl.textContent = 'Enter a valid email';
+      }
+      return;
+    }
+
+    if (statusEl) {
+      statusEl.className = 'status warn';
+      statusEl.textContent = 'Submitting…';
+    }
+
+    try {
+      const r = await fetch("https://script.google.com/macros/s/AKfycbzf9GCeNIPl4SwHAkImpeP_3udLzG6QzoSt4HAl_dd-bKETz9CmbDkdTjnKo6XpPFj1/exec", {
+        method: 'POST',
         mode: 'no-cors',
-        headers:{'Content-Type':'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-      if (statusEl){
-        statusEl.className='status ok';
-        statusEl.textContent='🎉 You’re in!';
-        setTimeout(() => { statusEl.textContent = ''; }, 5000); // disappears after 5 seconds
+
+      if (statusEl) {
+        statusEl.className = 'status ok';
+        statusEl.textContent = '✅ You’re in!';
       }
-      if (emailEl) emailEl.value='';
-    }catch(e){
-      if(statusEl){ statusEl.className='status err'; statusEl.textContent='Network error'; }
+
+      if (emailEl) emailEl.value = '';
+
+      // 🕒 Auto-clear after 5 seconds
+      setTimeout(() => {
+        if (statusEl) statusEl.textContent = '';
+      }, 5000);
+
+    } catch (e) {
+      if (statusEl) {
+        statusEl.className = 'status err';
+        statusEl.textContent = 'Network error';
+      }
     }
   });
 }
