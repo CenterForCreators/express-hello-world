@@ -305,7 +305,11 @@ async function claimFaucet(){
       try{ await connectXRPLAndLoadBalances(account); }catch(e){}
       try{ if(typeof regenCaptcha==='function') regenCaptcha(); }catch(e){};
     }else{
-      if(msgEl) msgEl.textContent = '❌ ' + (data && (data.error||data.message) || 'Claim failed');
+      if(msgEl){ 
+      const __err = (data && (data.error||data.message)) || '';
+      if (/invalid account/i.test(__err)) { msgEl.textContent = ''; }
+      else { msgEl.textContent = '❌ ' + (__err || 'Claim failed'); }
+    }
     }
   }catch(e){
     console.error('claim error', e);
@@ -1573,6 +1577,30 @@ function checkCaptcha(){
       }
       try{
         if (window.xumm && typeof window.xumm.authorize === 'function'){
+          // Enhanced full disconnect before returning
+          try{
+            if (window.xumm && typeof window.xumm.logout === 'function') {
+              await window.xumm.logout();
+            }
+          }catch(_){}
+          try{
+            // Clear any XUMM-related storage to force QR on reconnect
+            (function(){
+              try{
+                for (var i=0; i<localStorage.length; i++){
+                  var k = localStorage.key(i);
+                  if (/^xumm/i.test(k)) { localStorage.removeItem(k); i--; }
+                }
+              }catch(_){}
+              try{
+                for (var j=0; j<sessionStorage.length; j++){
+                  var s = sessionStorage.key(j);
+                  if (/^xumm/i.test(s)) { sessionStorage.removeItem(s); j--; }
+                }
+              }catch(_){}
+            })();
+          }catch(_){}
+
           const { me } = await window.xumm.authorize();
           if (me && me.account){
             window.connectedAccount = me.account;
