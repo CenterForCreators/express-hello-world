@@ -1884,38 +1884,36 @@ if (joinHandlerTarget && !joinHandlerTarget.__wired){
       join.appendChild(container);
     }
   }
-
-  // Wire Join submit
-  function wireJoin(){
-    var form = document.getElementById('joinForm');
-    if (!form || form.__wired) return;
-    form.__wired = true;
-    form.addEventListener('submit', async function(ev){
-      ev.preventDefault();
-      var emailEl = document.getElementById('joinEmail');
-      var statusEl = document.getElementById('joinStatus');
-      var email = (emailEl && emailEl.value || '').trim();
-      if(!email){ if(statusEl){ statusEl.className='status err'; statusEl.textContent='Enter an email'; } return; }
-      if(statusEl){ statusEl.className='status warn'; statusEl.textContent='Submitting…'; }
-      try{
-        const res = await fetch((CONFIG && CONFIG.USE_CORS_PROXY ? (CONFIG.CORS_PROXY + 'https://cfc-faucet.onrender.com/api/join') : 'https://cfc-faucet.onrender.com/api/join'), {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ email })
-        });
-        const j = await res.json();
-        if (statusEl){
-          if (j && j.ok){
-            statusEl.className='status ok'; statusEl.textContent='🎉 You’re in!';
-            if (emailEl) emailEl.value='';
-          } else {
-            statusEl.className='status err'; statusEl.textContent=(j && j.error) || 'Join failed';
-          }
-        }
-      }catch(e){
-        if(statusEl){ statusEl.className='status err'; statusEl.textContent='Network error'; }
+// Wire Join submit
+function wireJoin(){
+  var form = document.getElementById('joinForm');
+  if (!form || form.__wired) return;
+  form.__wired = true;
+  form.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    var emailEl = document.getElementById('joinEmail');
+    var statusEl = document.getElementById('joinStatus');
+    var email = (emailEl && emailEl.value || '').trim();
+    if(!email){ if(statusEl){ statusEl.className='status err'; statusEl.textContent='Enter an email'; } return; }
+    if(statusEl){ statusEl.className='status warn'; statusEl.textContent='Submitting…'; }
+    try{
+      const res = await fetch('https://script.google.com/macros/s/AKfycbzf9GCeNIPl4SwHAkImpeP_3udLzG6QzoSt4HAl_dd-bKETz9CmbDkdTjnKo6XpPFj1/exec', {
+        method:'POST',
+        mode: 'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email })
+      });
+      if (statusEl){
+        statusEl.className='status ok';
+        statusEl.textContent='🎉 You’re in!';
+        setTimeout(() => { statusEl.textContent = ''; }, 5000); // disappears after 5 seconds
       }
-    });
-  }
+      if (emailEl) emailEl.value='';
+    }catch(e){
+      if(statusEl){ statusEl.className='status err'; statusEl.textContent='Network error'; }
+    }
+  });
+}
 
   function boot(){
     try { ensureDividerCSS(); } catch(e){}
