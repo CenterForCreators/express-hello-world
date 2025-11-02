@@ -968,27 +968,7 @@ function checkCaptcha(){
   const joinBtn = gid('joinBtn') || gid('emailSubmit');
   const joinStatus = gid('joinStatus') || gid('emailMsg');
   if(joinBtn && !joinBtn.__wired){
-    joinBtn.__wired = true;
-    joinBtn.addEventListener('click', async function(){
-      const email = (joinEmail && joinEmail.value || '').trim();
-      if(!email || !/\\S+@\\S+\\.\\S+/.test(email)){
-        if(joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Enter a valid email'; }
-        return;
-      }
-      if(joinStatus){ joinStatus.className='status warn'; joinStatus.textContent='Submitting…'; }
-      try{
-        const j = await postJson(CONFIG.JOIN_ENDPOINT, { email });
-        if(j && j.ok){
-          if(joinStatus){ joinStatus.className='status ok'; joinStatus.textContent='🎉 You’re in!'; }
-          if(joinEmail) joinEmail.value='';
-        }else{
-          if(joinStatus){ joinStatus.className='status err'; joinStatus.textContent=(j&&j.error)||'Join failed'; }
-        }
-      }catch(e){
-        if(joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Network error'; }
-      }
-    });
-  }
+    joinBtn.  }
 
   
   if(wtrust && !wtrust.__wired){
