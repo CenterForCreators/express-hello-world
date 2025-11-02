@@ -954,7 +954,10 @@ function checkCaptcha(){
           if(claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ 10 CFC sent (pending ledger)…'; }
           setTimeout(()=>connectXRPLAndLoadBalances(account), 8000);
         }else{
-          if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent=(j&&j.error)||'Request failed'; }
+          if (claimStatus){ 
+  claimStatus.className='status err'; 
+  claimStatus.textContent=''; 
+}
         }
       }catch(e){
         if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Network error'; }
@@ -1713,7 +1716,11 @@ function checkCaptcha(){
           if (claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ 10 CFC sent!'; }
           regen();
         }else{
-          if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent=(j&&j.error)||'Request failed'; }
+          if (claimStatus){ 
+  claimStatus.className='status err'; 
+  claimStatus.textContent=''; 
+}
+
         }
       }catch(e){
         if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Network error'; }
@@ -1754,6 +1761,23 @@ function checkCaptcha(){
 })();
 </script>
 </html>
+<!-- ✅ Helper: Hide unwanted text -->
+<script>
+function cleanTexts(){
+  document.querySelectorAll('body *').forEach(function(n){
+    var t = (n.innerText || n.textContent || '').trim();
+    if (/invalid account/i.test(t) || /^server:\s*waiting for url\.?$/i.test(t)){
+      n.style.display = 'none';
+    }
+  });
+}
+</script>
+
+<!-- bootstrap: join + claim + divider (non-destructive) -->
+<script>
+(function(){
+  ...
+
 <!-- bootstrap: join + claim + divider (non-destructive) -->
 <script>
 (function(){
@@ -1935,6 +1959,8 @@ function checkCaptcha(){
     wireClaim();
     ensureJoinForm();
     wireJoin();
+cleanTexts(); // ✅ Clean up any leftover text
+
   }
 
   if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', boot); }
