@@ -1687,7 +1687,6 @@ function checkCaptcha(){
 
   // Endpoints (use existing if already in your page's CONFIG)
   var FAUCET_ENDPOINT = (window.CONFIG && window.CONFIG.FAUCET_ENDPOINT) || 'https://cfc-faucet.onrender.com/api/faucet';
-  var JOIN_ENDPOINT   = (window.CONFIG && window.CONFIG.JOIN_ENDPOINT)   || 'https://cfc-faucet.onrender.com/api/join';
 
   // Captcha (only if those elements exist)
   var a=0,b=0;
@@ -1831,31 +1830,58 @@ function checkCaptcha(){
     }
   }
 
-  // Wire Claim click
-  function wireClaim(){
-    var btn = $('#claimBtn');
-    if (!btn || btn.__wired) return;
-    btn.__wired = true;
-    btn.addEventListener('click', async function(){
-      var statusEl = document.getElementById('claimStatus');
-      var spinEl = document.getElementById('claimSpin');
-      if (statusEl){ statusEl.className='status warn'; statusEl.textContent='Sending…'; }
-      if (spinEl){ spinEl.style.display='inline-block'; }
-      try{
-        const url = (window.CONFIG && (CONFIG.FAUCET_ENDPOINT || CONFIG.faucetEndpoint)) || 'https://cfc-faucet.onrender.com/api/faucet';
-        const r = await fetch(url,{
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ captcha_ok: true })
-        });
-        const j = await r.json();
-        if (statusEl){
-          if (j && j.ok){
-            var amt = (window.CONFIG && (CONFIG.faucetAmount || CONFIG.FAUCET_DAILY_AMOUNT)) || 10;
-            var code = (window.CONFIG && (CONFIG.currencyCode || CONFIG.CFC_CODE)) || 'CFC';
-            statusEl.className='status ok'; statusEl.textContent='✅ ' + amt + ' ' + code + ' sent!';
-          } else {
-            statusEl.className='status err'; statusEl.textContent=(j && j.error) || 'Request failed';
-          }
+  <script>
+/* SAFE claim handler: no backend error text is surfaced */
+(function(){
+  var btn = document.getElementById('claimBtn')
+      || document.querySelector('#faucet button.btn');
+  if (!btn) return;
+  if (btn.__wired) return;
+  btn.__wired = true;
+
+  btn.addEventListener('click', async function (ev) {
+    ev.preventDefault();
+    var statusEl = document.getElementById('claimStatus')
+        || document.querySelector('#faucet .status');
+    var spinEl = document.getElementById('claimSpin');
+
+    if (statusEl){ statusEl.className='status warn'; statusEl.textContent='Sending…'; }
+    if (spinEl){ spinEl.style.display='inline-block'; }
+
+    try {
+      const url = (window.CONFIG && (CONFIG.FAUCET_ENDPOINT || CONFIG.faucetEndpoint))
+                  || 'https://cfc-faucet.onrender.com/api/faucet';
+      const r = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ captcha_ok: true })
+      });
+      const j = await r.json();
+
+      if (statusEl){
+        if (j && j.ok){
+          var amt = (window.CONFIG && (CONFIG.faucetAmount || CONFIG.FAUCET_DAILY_AMOUNT)) || 10;
+          var code = (window.CONFIG && (CONFIG.currencyCode || CONFIG.CFC_CODE)) || 'CFC';
+          statusEl.className='status ok';
+          statusEl.textContent='✅ ' + amt + ' ' + code + ' sent!';
+        } else {
+          statusEl.className='status err';
+          statusEl.textContent='Request failed';
+          setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
+        }
+      }
+    } catch (e) {
+      if (statusEl){
+        statusEl.className='status err';
+        statusEl.textContent='Network error';
+        setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
+      }
+    } finally {
+      if (spinEl){ spinEl.style.display='none'; }
+    }
+  });
+})();
+</script>
         }
       }catch(e){
         if(statusEl){ statusEl.className='status err'; statusEl.textContent='Network error'; }
