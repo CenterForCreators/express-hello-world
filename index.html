@@ -968,7 +968,27 @@ function checkCaptcha(){
   const joinBtn = gid('joinBtn') || gid('emailSubmit');
   const joinStatus = gid('joinStatus') || gid('emailMsg');
   if(joinBtn && !joinBtn.__wired){
-    joinBtn.  }
+    joinBtn.__wired = true;
+    joinBtn.addEventListener('click', async function(){
+      const email = (joinEmail && joinEmail.value || '').trim();
+      if(!email || !/\\S+@\\S+\\.\\S+/.test(email)){
+        if(joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Enter a valid email'; }
+        return;
+      }
+      if(joinStatus){ joinStatus.className='status warn'; joinStatus.textContent='Submitting…'; }
+      try{
+        const j = await postJson(CONFIG.JOIN_ENDPOINT, { email });
+        if(j && j.ok){
+          if(joinStatus){ joinStatus.className='status ok'; joinStatus.textContent='🎉 You’re in!'; }
+          if(joinEmail) joinEmail.value='';
+        }else{
+          if(joinStatus){ joinStatus.className='status err'; joinStatus.textContent=(j&&j.error)||'Join failed'; }
+        }
+      }catch(e){
+        if(joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Network error'; }
+      }
+    });
+  }
 
   
   if(wtrust && !wtrust.__wired){
@@ -1645,6 +1665,50 @@ function checkCaptcha(){
   setTimeout(updateWallet, 1000);
   setInterval(updateWallet, 4000);
 })();
+</script>
+</body>
+<script>
+(function(){
+  // local helpers (no globals)
+  var $ = function(sel, root){ return (root||document).querySelector(sel); };
+
+  // Discover elements actually present in your page
+  var claimBtn = document.getElementById('claimBtn') || document.querySelector('#faucet button.btn');
+  var claimStatus = document.getElementById('claimStatus') || document.querySelector('#faucet .status');
+  var claimSpin = document.getElementById('claimSpin');
+  var capQ = document.getElementById('capQ');
+  var capA = document.getElementById('capA');
+  var capRefresh = document.getElementById('capRefresh');
+
+  var joinForm = document.getElementById('joinForm');
+  var joinEmail = document.getElementById('joinEmail') || document.getElementById('emailInput');
+  var joinBtn = document.getElementById('joinBtn') || document.getElementById('emailSubmit');
+  var joinStatus = document.getElementById('joinStatus') || document.getElementById('emailMsg');
+
+  // Endpoints (use existing if already in your page's CONFIG)
+  var FAUCET_ENDPOINT = (window.CONFIG && window.CONFIG.FAUCET_ENDPOINT) || 'https://cfc-faucet.onrender.com/api/faucet';
+  var JOIN_ENDPOINT   = (window.CONFIG && window.CONFIG.JOIN_ENDPOINT)   || 'https://cfc-faucet.onrender.com/api/join';
+
+  // Captcha (only if those elements exist)
+  var a=0,b=0;
+  function regen(){
+    if (!capQ) return;
+    a = Math.floor(Math.random()*10);
+    b = Math.floor(Math.random()*10);
+    capQ.textContent = 'Solve: ' + a + ' + ' + b + ' = ?';
+    if (capA) capA.value = '';
+  }
+  if (capRefresh) capRefresh.addEventListener('click', regen);
+  if (capQ) { if (document.readyState !== 'loading') regen(); else document.addEventListener('DOMContentLoaded', regen); }
+
+  async function postJson(url, data){
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data||{})
+    });
+    return r.json();
+  }
 
   // Wire CLAIM if a button exists and not already wired
   if (claimBtn && !claimBtn.__wired){
@@ -1674,6 +1738,36 @@ function checkCaptcha(){
       }
     });
   }
+
+  // Wire JOIN
+  var joinHandlerTarget = joinBtn || (joinForm && joinForm);
+  if (joinHandlerTarget && !joinHandlerTarget.__wired){
+    joinHandlerTarget.__wired = true;
+    var handler = async function(ev){
+      if (ev && ev.preventDefault) ev.preventDefault();
+      var email = (joinEmail && joinEmail.value || '').trim();
+      if (!email || !/\S+@\S+\.\S+/.test(email)){
+        if (joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Enter a valid email'; }
+        return false;
+      }
+      if (joinStatus){ joinStatus.className='status warn'; joinStatus.textContent='Submitting…'; }
+      try{
+        const j = await postJson(JOIN_ENDPOINT, { email });
+        if (j && j.ok){
+          if (joinStatus){ joinStatus.className='status ok'; joinStatus.textContent='🎉 You’re in!'; }
+          if (joinEmail) joinEmail.value='';
+        } else {
+          if (joinStatus){ joinStatus.className='status err'; joinStatus.textContent=(j&&j.error)||'Join failed'; }
+        }
+      }catch(e){
+        if (joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Network error'; }
+      }
+      return false;
+    };
+    if (joinBtn) joinBtn.addEventListener('click', handler);
+    if (joinForm) joinForm.addEventListener('submit', handler);
+  }
+})();
 </script>
 </html>
 <!-- bootstrap: join + claim + divider (non-destructive) -->
@@ -1760,9 +1854,7 @@ function checkCaptcha(){
             var code = (window.CONFIG && (CONFIG.currencyCode || CONFIG.CFC_CODE)) || 'CFC';
             statusEl.className='status ok'; statusEl.textContent='✅ ' + amt + ' ' + code + ' sent!';
           } else {
-            statusEl.textContent = ''; // clears error content
-statusEl.className = '';   // removes error styling
-
+            statusEl.className='status err'; statusEl.textContent=(j && j.error) || 'Request failed';
           }
         }
       }catch(e){
@@ -1793,60 +1885,37 @@ statusEl.className = '';   // removes error styling
     }
   }
 
-// ✅ Wire Join to Google Sheets webhook
-function wireJoin() {
-  var form = document.getElementById('joinForm');
-  if (!form || form.__wired) return;
-  form.__wired = true;
-
-  form.addEventListener('submit', async function (ev) {
-    ev.preventDefault();
-
-    var emailEl = document.getElementById('joinEmail');
-    var statusEl = document.getElementById('joinStatus');
-    var email = (emailEl && emailEl.value || '').trim();
-
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      if (statusEl) {
-        statusEl.className = 'status err';
-        statusEl.textContent = 'Enter a valid email';
+  // Wire Join submit
+  function wireJoin(){
+    var form = document.getElementById('joinForm');
+    if (!form || form.__wired) return;
+    form.__wired = true;
+    form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var emailEl = document.getElementById('joinEmail');
+      var statusEl = document.getElementById('joinStatus');
+      var email = (emailEl && emailEl.value || '').trim();
+      if(!email){ if(statusEl){ statusEl.className='status err'; statusEl.textContent='Enter an email'; } return; }
+      if(statusEl){ statusEl.className='status warn'; statusEl.textContent='Submitting…'; }
+      try{
+        const res = await fetch((CONFIG && CONFIG.USE_CORS_PROXY ? (CONFIG.CORS_PROXY + 'https://cfc-faucet.onrender.com/api/join') : 'https://cfc-faucet.onrender.com/api/join'), {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email })
+        });
+        const j = await res.json();
+        if (statusEl){
+          if (j && j.ok){
+            statusEl.className='status ok'; statusEl.textContent='🎉 You’re in!';
+            if (emailEl) emailEl.value='';
+          } else {
+            statusEl.className='status err'; statusEl.textContent=(j && j.error) || 'Join failed';
+          }
+        }
+      }catch(e){
+        if(statusEl){ statusEl.className='status err'; statusEl.textContent='Network error'; }
       }
-      return;
-    }
-
-    if (statusEl) {
-      statusEl.className = 'status warn';
-      statusEl.textContent = 'Submitting…';
-    }
-
-    try {
-      const r = await fetch("https://script.google.com/macros/s/AKfycbzf9GCeNIPl4SwHAkImpeP_3udLzG6QzoSt4HAl_dd-bKETz9CmbDkdTjnKo6XpPFj1/exec", {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      if (statusEl) {
-        statusEl.className = 'status ok';
-        statusEl.textContent = '✅ You’re in!';
-      }
-
-      if (emailEl) emailEl.value = '';
-
-      // 🕒 Auto-clear after 5 seconds
-      setTimeout(() => {
-        if (statusEl) statusEl.textContent = '';
-      }, 5000);
-
-    } catch (e) {
-      if (statusEl) {
-        statusEl.className = 'status err';
-        statusEl.textContent = 'Network error';
-      }
-    }
-  });
-}
+    });
+  }
 
   function boot(){
     try { ensureDividerCSS(); } catch(e){}
