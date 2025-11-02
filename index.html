@@ -1665,50 +1665,6 @@ function checkCaptcha(){
   setTimeout(updateWallet, 1000);
   setInterval(updateWallet, 4000);
 })();
-</script>
-</body>
-<script>
-(function(){
-  // local helpers (no globals)
-  var $ = function(sel, root){ return (root||document).querySelector(sel); };
-
-  // Discover elements actually present in your page
-  var claimBtn = document.getElementById('claimBtn') || document.querySelector('#faucet button.btn');
-  var claimStatus = document.getElementById('claimStatus') || document.querySelector('#faucet .status');
-  var claimSpin = document.getElementById('claimSpin');
-  var capQ = document.getElementById('capQ');
-  var capA = document.getElementById('capA');
-  var capRefresh = document.getElementById('capRefresh');
-
-  var joinForm = document.getElementById('joinForm');
-  var joinEmail = document.getElementById('joinEmail') || document.getElementById('emailInput');
-  var joinBtn = document.getElementById('joinBtn') || document.getElementById('emailSubmit');
-  var joinStatus = document.getElementById('joinStatus') || document.getElementById('emailMsg');
-
-  // Endpoints (use existing if already in your page's CONFIG)
-  var FAUCET_ENDPOINT = (window.CONFIG && window.CONFIG.FAUCET_ENDPOINT) || 'https://cfc-faucet.onrender.com/api/faucet';
-  var JOIN_ENDPOINT   = (window.CONFIG && window.CONFIG.JOIN_ENDPOINT)   || 'https://cfc-faucet.onrender.com/api/join';
-
-  // Captcha (only if those elements exist)
-  var a=0,b=0;
-  function regen(){
-    if (!capQ) return;
-    a = Math.floor(Math.random()*10);
-    b = Math.floor(Math.random()*10);
-    capQ.textContent = 'Solve: ' + a + ' + ' + b + ' = ?';
-    if (capA) capA.value = '';
-  }
-  if (capRefresh) capRefresh.addEventListener('click', regen);
-  if (capQ) { if (document.readyState !== 'loading') regen(); else document.addEventListener('DOMContentLoaded', regen); }
-
-  async function postJson(url, data){
-    const r = await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data||{})
-    });
-    return r.json();
-  }
 
   // Wire CLAIM if a button exists and not already wired
   if (claimBtn && !claimBtn.__wired){
