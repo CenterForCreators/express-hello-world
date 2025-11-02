@@ -1623,21 +1623,6 @@ function checkCaptcha(){
     };
   })();
 
-  // Hide "Invalid Account" text near claim and "Server: Waiting for URL."
-  function cleanTexts(){
-    $all('body *').forEach(function(n){
-      var t = (n.innerText || n.textContent || '').trim();
-      if (/invalid account/i.test(t) || /^server:\s*waiting for url\.?$/i.test(t)){
-        n.style.display = 'none';
-      }
-    });
-    // Also hide standalone "XRP: —" / "CFC: —"
-    $all('body *').forEach(function(n){
-      var t = (n.innerText || n.textContent || '').trim();
-      if (/^(XRP|CFC)\s*:\s*—$/i.test(t)) n.style.display = 'none';
-    });
-  }
-
   // Auto-clear success message after 5s
   (function(){
     var nodes = [gid('faucet-result'), gid('claimStatus')].filter(Boolean);
