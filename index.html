@@ -1918,9 +1918,7 @@ function cleanTexts(){
   if(ans){ ans.addEventListener('input', function(){ if(typeof checkCaptcha==='function') checkCaptcha(); }); }
   if(typeof newCaptcha==='function') newCaptcha();
 })();
-</script>
 <script>
-
 document.addEventListener("DOMContentLoaded", () => {
   const savedAccount = localStorage.getItem("connectedAccount");
   if (savedAccount) {
@@ -1928,29 +1926,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const connectBtn = document.getElementById("connect-btn");
     const walletAddr = document.getElementById("wallet-address");
     if (connectBtn) connectBtn.textContent = "Connected";
-    if (walletAddr) walletAddr.textContent = connectedAccount ? connectedAccount ? `Connected Wallet: ${connectedAccount}` : '' : '';
-    updateBalances(savedAccount);
+    if (walletAddr) walletAddr.textContent = connectedAccount ? `Connected Wallet: ${connectedAccount}` : '';
+    if (typeof updateBalances === 'function') updateBalances(savedAccount);
   }
 });
-} catch (e) {
-      if (statusEl){
-        statusEl.className='status err';
-        statusEl.textContent='Network error';
-        setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
-      }
-    } finally {
-      if (spinEl){ spinEl.style.display='none'; }
-    }
-  });
-})();
 </script>
-        }
-      }catch(e){
-        if(statusEl){ statusEl.className='status err'; statusEl.textContent='Network error'; }
-      }finally{
-        if (spinEl){ spinEl.style.display='none'; }
-      }
-    });
+
+<!-- This block was showing as text; it MUST live inside <script> -->
+<script>
+try {
+  // (nothing here on purpose: you only had closing parts visible)
+} catch (e) {
+  if (statusEl){
+    statusEl.className='status err';
+    statusEl.textContent='Network error';
+    setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
+  }
+} finally {
+  if (spinEl){ spinEl.style.display='none'; }
+}
+</script>
+
+<script>
+(function(){
+  function create(tag, attrs){
+    var el = document.createElement(tag);
+    if(attrs){ for (var k in attrs){ if(k==='text') el.textContent = attrs[k]; else el.setAttribute(k, attrs[k]); } }
+    return el;
   }
 
   // Ensure Join form exists inside #join
@@ -1958,8 +1960,6 @@ document.addEventListener("DOMContentLoaded", () => {
     var join = document.getElementById('join') || document.querySelector('section#join');
     if (!join) return;
     var form = document.getElementById('joinForm');
-    var email = document.getElementById('joinEmail');
-    var status = document.getElementById('joinStatus');
     if (!form){
       var container = create('div'); container.style.maxWidth = '420px';
       container.style.marginTop = '10px';
@@ -1973,7 +1973,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Wire Join submit
+  // Wire Join submit (leave endpoint as-is if you’re still using faucet join; otherwise swap URL)
   function wireJoin(){
     var form = document.getElementById('joinForm');
     if (!form || form.__wired) return;
@@ -2005,15 +2005,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Optional helper to hide unwanted text
+  function cleanTexts(){
+    document.querySelectorAll('body *').forEach(function(n){
+      var t = (n.innerText || n.textContent || '').trim();
+      if (/invalid account/i.test(t) || /^server:\s*waiting for url\.?$/i.test(t)){
+        n.style.display = 'none';
+      }
+    });
+  }
+
+  // If you also have wireClaim()/ensureClaimUI()/ensureFaucetDivider()/ensureDividerCSS() earlier in the file, we just call them:
   function boot(){
-    try { ensureDividerCSS(); } catch(e){}
-    try { ensureFaucetDivider(); } catch(e){}
-    try { ensureClaimUI(); } catch(e){}
-    wireClaim();
+    try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
+    try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
+    try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
+    try { if (typeof wireClaim==='function') wireClaim(); } catch(e){}
     ensureJoinForm();
     wireJoin();
-cleanTexts(); // ✅ Clean up any leftover text
-
+    try { cleanTexts(); } catch(e){}
   }
 
   if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', boot); }
@@ -2024,4 +2034,3 @@ cleanTexts(); // ✅ Clean up any leftover text
 
 </body>
 </html>
-
