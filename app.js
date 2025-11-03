@@ -183,9 +183,8 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    const filled = await client.autofill(tx);
-    const { result: { ledger_index } } = await client.request({ command: "ledger", ledger_index: "validated" });
-    filled.LastLedgerSequence = ledger_index + 20;
+ const filled = await client.autofill(tx, { max_ledger_offset: 20 });
+   
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
