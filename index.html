@@ -1735,34 +1735,53 @@ if(connectBtn){
     });
   }
 
-  // Wire JOIN
-  var joinHandlerTarget = joinBtn || (joinForm && joinForm);
-  if (joinHandlerTarget && !joinHandlerTarget.__wired){
-    joinHandlerTarget.__wired = true;
-    var handler = async function(ev){
-      if (ev && ev.preventDefault) ev.preventDefault();
-      var email = (joinEmail && joinEmail.value || '').trim();
-      if (!email || !/\S+@\S+\.\S+/.test(email)){
-        if (joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Enter a valid email'; }
-        return false;
+ // Wire JOIN (fixed)
+if (joinBtn && !joinBtn.__wired) {
+  joinBtn.__wired = true;
+  joinBtn.addEventListener('click', async function(ev) {
+    ev.preventDefault();
+    var email = (joinEmail && joinEmail.value || '').trim();
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      if (joinStatus) {
+        joinStatus.className = 'status err';
+        joinStatus.textContent = 'Enter a valid email';
       }
-      if (joinStatus){ joinStatus.className='status warn'; joinStatus.textContent='Submitting…'; }
-      try{
-        const j = await postJson(JOIN_ENDPOINT, { email });
-        if (j && j.ok){
-          if (joinStatus){ joinStatus.className='status ok'; joinStatus.textContent='🎉 You’re in!'; }
-          if (joinEmail) joinEmail.value='';
-        } else {
-          if (joinStatus){ joinStatus.className='status err'; joinStatus.textContent=(j&&j.error)||'Join failed'; }
+      return;
+    }
+    if (joinStatus) {
+      joinStatus.className = 'status warn';
+      joinStatus.textContent = 'Submitting...';
+    }
+
+    try {
+      const res = await fetch((CONFIG?.USE_CORS_PROXY ? `${CONFIG.CORS_PROXY}https://cfc-faucet.onrender.com/api/join` : 'https://cfc-faucet.onrender.com/api/join'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const j = await res.json();
+      if (j && j.ok) {
+        if (joinStatus) {
+          joinStatus.className = 'status ok';
+          joinStatus.textContent = '🎉 You’re in!';
         }
-      }catch(e){
-        if (joinStatus){ joinStatus.className='status err'; joinStatus.textContent='Network error'; }
+        if (joinEmail) joinEmail.value = '';
+      } else {
+        if (joinStatus) {
+          joinStatus.className = 'status err';
+          joinStatus.textContent = (j && j.error) || 'Join failed';
+        }
       }
-      return false;
-    };
-    if (joinBtn) joinBtn.addEventListener('click', handler);
-    if (joinForm) joinForm.addEventListener('submit', handler);
-  }
+    } catch (e) {
+      if (joinStatus) {
+        joinStatus.className = 'status err';
+        joinStatus.textContent = 'Network error';
+      }
+    }
+  });
+}
+
 })();
 </script>
 </html>
