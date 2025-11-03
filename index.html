@@ -1139,34 +1139,35 @@ function checkCaptcha(){
     }
   }
 
-  async async function connectXumm(){
-    try{
-      if(window.xumm && window.xumm.authorize){
-        const res = await window.xumm.authorize({
-  return_url: {
-    web: "https://centerforcreators.com/nft-marketplace"
-  }
-});
-        if(res && res.me && res.me.account){
-          connectedAccount = res.me.account;
-          if(connectBtn){ connectBtn.textContent = "Connected"; connectBtn.disabled = false; }
-          if(addrBadge){ addrBadge.textContent = connectedAccount; }
-          fetchBalances(connectedAccount);
+ async function connectXumm(){
+  try{
+    if(window.xumm && window.xumm.authorize){
+      const res = await window.xumm.authorize({
+        return_url: {
+          web: "https://centerforcreators.com/nft-marketplace",  // Web/desktop redirect
+          ios: "https://centerforcreators.com/nft-marketplace"   // iPhone/iOS redirect
         }
+      });
+      if(res && res.me && res.me.account){
+        connectedAccount = res.me.account;
+        if(connectBtn){ connectBtn.textContent = "Connected"; connectBtn.disabled = false; }
+        if(addrBadge){ addrBadge.textContent = connectedAccount; }
+        fetchBalances(connectedAccount);
       }
-    }catch(e){
-      console.error(e);
-      toast && toast("Xaman connect failed");
     }
+  }catch(e){
+    console.error(e);
+    toast && toast("Xaman connect failed");
   }
+}
 
-  if(connectBtn){
-    connectBtn.addEventListener('click', function(){
-      // If already connected, do nothing
-      if(connectedAccount){ return; }
-      connectXumm();
-    });
-  }
+if(connectBtn){
+  connectBtn.addEventListener('click', function(){
+    // If already connected, do nothing
+    if(connectedAccount){ return; }
+    connectXumm();
+  });
+}
 
   // Provide a global for other handlers (Claim) to know connection
   window.__cfcConnectedAccount = () => connectedAccount;
