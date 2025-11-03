@@ -1142,7 +1142,11 @@ function checkCaptcha(){
   async async function connectXumm(){
     try{
       if(window.xumm && window.xumm.authorize){
-        const res = await window.xumm.authorize();
+        const res = await window.xumm.authorize({
+  return_url: {
+    web: "https://centerforcreators.com/nft-marketplace"
+  }
+});
         if(res && res.me && res.me.account){
           connectedAccount = res.me.account;
           if(connectBtn){ connectBtn.textContent = "Connected"; connectBtn.disabled = false; }
