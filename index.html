@@ -1701,101 +1701,110 @@ if(connectBtn){
     });
     return r.json();
   }
-
-  // Wire CLAIM if a button exists and not already wired
-  if (claimBtn && !claimBtn.__wired){
-    claimBtn.__wired = true;
-    claimBtn.addEventListener('click', async function(){
-      if (capQ && capA){
-        var ans = parseInt(capA.value||'NaN',10);
-        if (isNaN(ans) || ans !== (a+b)){
-          if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
-          return;
+// Wire CLAIM if a button exists and not already wired
+if (claimBtn && !claimBtn.__wired){
+  claimBtn.__wired = true;
+  claimBtn.addEventListener('click', async function(){
+    if (capQ && capA){
+      var ans = parseInt(capA.value||'NaN',10);
+      if (isNaN(ans) || ans !== (a+b)){
+        if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
+        return;
+      }
+    }
+    if (claimStatus){ claimStatus.className='status warn'; claimStatus.textContent='Sending…'; }
+    if (claimSpin){ claimSpin.style.display='inline-block'; }
+    try{
+      const j = await postJson(FAUCET_ENDPOINT, { captcha_ok:true });
+      if (j && j.ok){
+        if (claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ 10 CFC sent!'; }
+        regen && regen();
+      } else {
+        // Do not surface backend error text like "Invalid account"
+        if (claimStatus){
+          claimStatus.className='status err';
+          claimStatus.textContent='Request failed';
+          setTimeout(()=>{ claimStatus.textContent=''; claimStatus.className='status'; }, 5000);
         }
       }
-      if (claimStatus){ claimStatus.className='status warn'; claimStatus.textContent='Sending…'; }
-      if (claimSpin){ claimSpin.style.display='inline-block'; }
-      try{
-        const j = await postJson(FAUCET_ENDPOINT, { captcha_ok:true });
-        if (j && j.ok){
-          if (claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ 10 CFC sent!'; }
-          regen();
-        }else{
-          if (claimStatus){ 
-  claimStatus.className='status err'; 
-  claimStatus.textContent=''; 
+    }catch(e){
+      if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Network error'; }
+    }finally{
+      if (claimSpin){ claimSpin.style.display='none'; }
+    }
+  });
 }
 
-        }
-      }catch(e){
-        if (claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Network error'; }
-      }finally{
-        if (claimSpin){ claimSpin.style.display='none'; }
-      }
-    });
-  }
+// Wire JOIN (fixed) — click AND form submit use the same handler
+(function(){
+  if (joinBtn && !joinBtn.__wired){
+    const handler = async function(ev){
+      if (ev && ev.preventDefault) ev.preventDefault();
+      var email = (joinEmail && joinEmail.value || '').trim();
 
- // Wire JOIN (fixed)
-if (joinBtn && !joinBtn.__wired) {
-  joinBtn.__wired = true;
-  joinBtn.addEventListener('click', async function(ev) {
-    ev.preventDefault();
-    var email = (joinEmail && joinEmail.value || '').trim();
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      if (joinStatus) {
-        joinStatus.className = 'status err';
-        joinStatus.textContent = 'Enter a valid email';
-      }
-      return;
-    }
-    if (joinStatus) {
-      joinStatus.className = 'status warn';
-      joinStatus.textContent = 'Submitting...';
-    }
-
-    try {
-      const res = await fetch((CONFIG?.USE_CORS_PROXY ? `${CONFIG.CORS_PROXY}https://cfc-faucet.onrender.com/api/join` : 'https://cfc-faucet.onrender.com/api/join'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      const j = await res.json();
-      if (j && j.ok) {
-        if (joinStatus) {
-          joinStatus.className = 'status ok';
-          joinStatus.textContent = '🎉 You’re in!';
-        }
-        if (joinEmail) joinEmail.value = '';
-      } else {
+      if (!email || !/\S+@\S+\.\S+/.test(email)) {
         if (joinStatus) {
           joinStatus.className = 'status err';
-          joinStatus.textContent = (j && j.error) || 'Join failed';
+          joinStatus.textContent = 'Enter a valid email';
+        }
+        return false;
+      }
+
+      if (joinStatus) {
+        joinStatus.className = 'status warn';
+        joinStatus.textContent = 'Submitting…';
+      }
+
+      try {
+        const res = await fetch(
+          (window.CONFIG && window.CONFIG.USE_CORS_PROXY)
+            ? (CONFIG.CORS_PROXY + 'https://cfc-faucet.onrender.com/api/join')
+            : 'https://cfc-faucet.onrender.com/api/join',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          }
+        );
+
+        // Parse JSON safely
+        let j = null;
+        try { j = await res.json(); } catch(_){ j = null; }
+
+        if (res.ok && j && j.ok){
+          if (joinStatus){
+            joinStatus.className = 'status ok';
+            joinStatus.textContent = '🎉 You’re in!';
+          }
+          if (joinEmail) joinEmail.value = '';
+          setTimeout(()=>{ if(joinStatus){ joinStatus.textContent=''; joinStatus.className='status'; } }, 5000);
+        } else {
+          if (joinStatus){
+            joinStatus.className = 'status err';
+            joinStatus.textContent = (j && j.error) || 'Join failed';
+          }
+        }
+      } catch (e) {
+        if (joinStatus) {
+          joinStatus.className = 'status err';
+          joinStatus.textContent = 'Network error';
         }
       }
-    } catch (e) {
-      if (joinStatus) {
-        joinStatus.className = 'status err';
-        joinStatus.textContent = 'Network error';
-      }
-    }
-  });
-}
+      return false;
+    };
 
-})();
-</script>
-</html>
-<!-- ✅ Helper: Hide unwanted text -->
-<script>
-function cleanTexts(){
-  document.querySelectorAll('body *').forEach(function(n){
-    var t = (n.innerText || n.textContent || '').trim();
-    if (/invalid account/i.test(t) || /^server:\s*waiting for url\.?$/i.test(t)){
-      n.style.display = 'none';
+    joinBtn.__wired = true;
+    joinBtn.addEventListener('click', handler);
+
+    // If a real form exists, also wire its submit
+    if (joinForm && !joinForm.__wired){
+      joinForm.__wired = true;
+      joinForm.addEventListener('submit', handler);
     }
-  });
-}
-</script>
+  }
+})();
+
+
 
 <!-- bootstrap: join + claim + divider (non-destructive) -->
 <script>
