@@ -2038,4 +2038,29 @@ try {
 </script>
 
 </body>
+<script>
+/* Force Xaman to always return to your site after connect (iOS/Android/Web) */
+(function(){
+  var TARGET = "https://centerforcreators.com/nft-marketplace";
+  function patchAuthorize(xumm){
+    if (!xumm || typeof xumm.authorize !== 'function' || xumm.__patched_return_url) return;
+    var orig = xumm.authorize.bind(xumm);
+    xumm.authorize = function(opts){
+      opts = opts || {};
+      var desired = { web: TARGET, ios: TARGET, android: TARGET };
+      // merge (we override missing fields but keep any the page supplied)
+      opts.return_url = Object.assign(desired, opts.return_url || {});
+      return orig(opts);
+    };
+    xumm.__patched_return_url = true;
+  }
+  // Patch now, on SDK ready, and via a short retry loop
+  if (window.xumm) patchAuthorize(window.xumm);
+  document.addEventListener('DOMContentLoaded', function(){ if (window.xumm) patchAuthorize(window.xumm); });
+  var iv = setInterval(function(){
+    if (window.xumm){ patchAuthorize(window.xumm); clearInterval(iv); }
+  }, 400);
+})();
+</script>
+
 </html>
