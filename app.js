@@ -73,7 +73,10 @@ app.get("/api/pay-cfc", async (_req, res) => {
           value: "10"
         }
       },
-      options: { submit: true }
+      options: { 
+        submit: true,
+        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+      }
     });
     console.log("Redirecting to:", link);
     return res.redirect(link);
@@ -92,7 +95,10 @@ app.get("/api/pay-xrp", async (_req, res) => {
         Destination: PAY_DESTINATION,
         Amount: xrpl.xrpToDrops("5")
       },
-      options: { submit: true }
+      options: { 
+        submit: true,
+        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+      }
     });
     console.log("Redirecting to:", link);
     return res.redirect(link);
@@ -183,8 +189,7 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
- const filled = await client.autofill(tx, { max_ledger_offset: 20 });
-   
+    const filled = await client.autofill(tx, { max_ledger_offset: 20 });
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
