@@ -1879,7 +1879,60 @@ function cleanTexts(){
           setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
         }
       }
-    } catch (e) {
+    
+</script>
+<script id="cfc-connect-and-bindings">
+(function(){
+  if(window._cfcPatched) return; window._cfcPatched = true;
+  const connectBtn = document.getElementById('connectBtn');
+  const claimBtn = document.getElementById('claimBtn');
+  const ans = document.getElementById('capAns');
+  const addrBadge = document.getElementById('addrBadge') || document.getElementById('address') || document.getElementById('walletAddress');
+
+  if(connectBtn){
+    connectBtn.onclick = null;
+    connectBtn.addEventListener('click', async function(){
+      try{
+        if(window.xumm && window.xumm.authorize){
+          const res = await window.xumm.authorize();
+          const acct = (res && (res.account || (res.me && res.me.account))) ? (res.account || res.me.account) : null;
+          if(acct){
+            window.connectedAccount = acct;
+            if(connectBtn){ connectBtn.textContent = 'Connected'; connectBtn.disabled = false; }
+            if(addrBadge){ addrBadge.textContent = acct; }
+            if(typeof fetchBalances==='function') fetchBalances(acct);
+          }
+        }
+      }catch(e){ console.error('Xaman connect error', e); }
+    });
+  }
+  if(claimBtn){
+    claimBtn.onclick = null;
+    claimBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      if(typeof checkCaptcha==='function' ? checkCaptcha() : true){
+        if(typeof claimFaucet==='function') claimFaucet();
+      }
+    });
+  }
+  if(ans){ ans.addEventListener('input', function(){ if(typeof checkCaptcha==='function') checkCaptcha(); }); }
+  if(typeof newCaptcha==='function') newCaptcha();
+})();
+</script>
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+  const savedAccount = localStorage.getItem("connectedAccount");
+  if (savedAccount) {
+    connectedAccount = savedAccount;
+    const connectBtn = document.getElementById("connect-btn");
+    const walletAddr = document.getElementById("wallet-address");
+    if (connectBtn) connectBtn.textContent = "Connected";
+    if (walletAddr) walletAddr.textContent = connectedAccount ? connectedAccount ? `Connected Wallet: ${connectedAccount}` : '' : '';
+    updateBalances(savedAccount);
+  }
+});
+} catch (e) {
       if (statusEl){
         statusEl.className='status err';
         statusEl.textContent='Network error';
@@ -1968,56 +2021,7 @@ cleanTexts(); // ✅ Clean up any leftover text
   try { new MutationObserver(boot).observe(document.documentElement, { childList:true, subtree:true }); } catch(e){}
 })();
 </script>
-<script id="cfc-connect-and-bindings">
-(function(){
-  if(window._cfcPatched) return; window._cfcPatched = true;
-  const connectBtn = document.getElementById('connectBtn');
-  const claimBtn = document.getElementById('claimBtn');
-  const ans = document.getElementById('capAns');
-  const addrBadge = document.getElementById('addrBadge') || document.getElementById('address') || document.getElementById('walletAddress');
 
-  if(connectBtn){
-    connectBtn.onclick = null;
-    connectBtn.addEventListener('click', async function(){
-      try{
-        if(window.xumm && window.xumm.authorize){
-          const res = await window.xumm.authorize();
-          const acct = (res && (res.account || (res.me && res.me.account))) ? (res.account || res.me.account) : null;
-          if(acct){
-            window.connectedAccount = acct;
-            if(connectBtn){ connectBtn.textContent = 'Connected'; connectBtn.disabled = false; }
-            if(addrBadge){ addrBadge.textContent = acct; }
-            if(typeof fetchBalances==='function') fetchBalances(acct);
-          }
-        }
-      }catch(e){ console.error('Xaman connect error', e); }
-    });
-  }
-  if(claimBtn){
-    claimBtn.onclick = null;
-    claimBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      if(typeof checkCaptcha==='function' ? checkCaptcha() : true){
-        if(typeof claimFaucet==='function') claimFaucet();
-      }
-    });
-  }
-  if(ans){ ans.addEventListener('input', function(){ if(typeof checkCaptcha==='function') checkCaptcha(); }); }
-  if(typeof newCaptcha==='function') newCaptcha();
-})();
-</script>
-<script>
+</body>
+</html>
 
-document.addEventListener("DOMContentLoaded", () => {
-  const savedAccount = localStorage.getItem("connectedAccount");
-  if (savedAccount) {
-    connectedAccount = savedAccount;
-    const connectBtn = document.getElementById("connect-btn");
-    const walletAddr = document.getElementById("wallet-address");
-    if (connectBtn) connectBtn.textContent = "Connected";
-    if (walletAddr) walletAddr.textContent = connectedAccount ? connectedAccount ? `Connected Wallet: ${connectedAccount}` : '' : '';
-    updateBalances(savedAccount);
-  }
-});
-
-</script>
