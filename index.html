@@ -2031,6 +2031,44 @@ try {
   try { new MutationObserver(boot).observe(document.documentElement, { childList:true, subtree:true }); } catch(e){}
 })();
 </script>
+<script>
+  document.getElementById('emailSubmit').addEventListener('click', async () => {
+    const emailInput = document.getElementById('emailInput');
+    const emailMsg = document.getElementById('emailMsg');
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+      emailMsg.textContent = 'Please enter a valid email.';
+      emailMsg.style.color = '#ff6b6b';
+      return;
+    }
+    
+    emailMsg.textContent = 'Submitting...';
+    emailMsg.style.color = '#9fb0d1';
+
+    try {
+      const response = await fetch('/api/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+
+      if (data.ok) {
+        emailMsg.textContent = 'Thanks for joining the list!';
+        emailMsg.style.color = '#1fcf7c';
+        emailInput.value = '';
+      } else {
+        emailMsg.textContent = 'Error: ' + (data.error || 'Please try again');
+        emailMsg.style.color = '#ff6b6b';
+      }
+    } catch (err) {
+      console.error(err);
+      emailMsg.textContent = 'Submission failed. Try again later.';
+      emailMsg.style.color = '#ff6b6b';
+    }
+  });
+</script>
 
 </body>
 </html>
