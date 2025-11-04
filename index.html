@@ -782,9 +782,15 @@ function checkCaptcha(){
         bind('buy3cfc', function(){ payItemCFC('book'); });
         bind('buy3xrp', function(){ payItemXRP('book'); });
       }
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAll); else bindAll();
-      try { new MutationObserver(bindAll).observe(document.documentElement, { childList:true, subtree:true }); } catch(e){}
-    })();
+     if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(bindAll, 500));
+} else {
+  setTimeout(bindAll, 500);
+}
+try {
+  new MutationObserver(() => setTimeout(bindAll, 500)).observe(document.documentElement, { childList: true, subtree: true });
+} catch(e) {}
+})();
   </script>
 <script>
     (function(){
