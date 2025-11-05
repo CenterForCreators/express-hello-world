@@ -3,6 +3,16 @@
 
 <html>
 <head>
+<script>
+(function () {
+  // Always run the site under your .com so Xaman returns to the same origin
+  if (location.hostname === 'centerforcreators.github.io') {
+    // Preserve query params & hash from the wallet app
+    location.replace('https://centerforcreators.com/nft-marketplace' + location.search + location.hash);
+  }
+})();
+</script>
+
 <!-- BUILD TAG: CFC-OK -->
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
