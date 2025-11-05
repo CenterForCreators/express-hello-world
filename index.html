@@ -1,18 +1,7 @@
-
 <!DOCTYPE html>
 
 <html>
 <head>
-<script>
-(function () {
-  // Always run the site under your .com so Xaman returns to the same origin
-  if (location.hostname === 'centerforcreators.github.io') {
-    // Preserve query params & hash from the wallet app
-    location.replace('https://centerforcreators.com/nft-marketplace' + location.search + location.hash);
-  }
-})();
-</script>
-
 <!-- BUILD TAG: CFC-OK -->
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
@@ -223,8 +212,7 @@
     };
 
     const client = new xrpl.Client(CONFIG.networkWss)
-    const xumm = new Xumm(CONFIG.XUMM_API_KEY, { redirectUrl: "https://centerforcreators.com/nft-marketplace" })
-
+    const xumm = new Xumm(CONFIG.XUMM_API_KEY)
     let connectedAccount = null
 
     const $ = sel => document.querySelector(sel)
@@ -804,19 +792,15 @@ if (typeof boot === 'function') {
   }
 }
 // Delay ONLY the payment button wiring to help Chrome finish loading SDKs.
-// Chrome fix: Delay UI/button wiring by 300ms, EXCEPT wallet connection
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    wireWallet(); // Immediate for iPhone/Safari
-    setTimeout(bindAll, 500); // Delay for other UI parts (like Claim button)
-  });
+  document.addEventListener('DOMContentLoaded', () => setTimeout(bindAll, 500));
 } else {
-  wireWallet();
   setTimeout(bindAll, 500);
 }
 try {
-  new MutationObserver(() => setTimeout(bindAll, 500)).observe(document.documentElement, { childList: true, subtree: true });
-} catch (e) {}
+  new MutationObserver(() => setTimeout(bindAll, 500))
+    .observe(document.documentElement, { childList: true, subtree: true });
+} catch(e) {}
 })();
 // ---- end safe init ----
   </script>
