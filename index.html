@@ -2033,16 +2033,21 @@ try {
     });
   }
 
-  // If you also have wireClaim()/ensureClaimUI()/ensureFaucetDivider()/ensureDividerCSS() earlier in the file, we just call them:
-  function boot(){
-    try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
-    try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
-    try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
+ function boot(){
+  try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
+  try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
+  try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
+
+  // Delay only the claim wiring by 300ms to improve Chrome wallet sync
+  setTimeout(() => {
     try { if (typeof wireClaim==='function') wireClaim(); } catch(e){}
-    ensureJoinForm();
-    wireJoin();
-    try { cleanTexts(); } catch(e){}
-  }
+  }, 300);
+  
+  ensureJoinForm();
+  wireJoin();
+  
+  try { cleanTexts(); } catch(e){}
+}
 
   if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', boot); }
   else { boot(); }
