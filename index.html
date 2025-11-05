@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html>
@@ -792,15 +793,19 @@ if (typeof boot === 'function') {
   }
 }
 // Delay ONLY the payment button wiring to help Chrome finish loading SDKs.
+// Chrome fix: Delay UI/button wiring by 300ms, EXCEPT wallet connection
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setTimeout(bindAll, 500));
+  document.addEventListener('DOMContentLoaded', () => {
+    wireWallet(); // Immediate for iPhone/Safari
+    setTimeout(bindAll, 500); // Delay for other UI parts (like Claim button)
+  });
 } else {
+  wireWallet();
   setTimeout(bindAll, 500);
 }
 try {
-  new MutationObserver(() => setTimeout(bindAll, 500))
-    .observe(document.documentElement, { childList: true, subtree: true });
-} catch(e) {}
+  new MutationObserver(() => setTimeout(bindAll, 500)).observe(document.documentElement, { childList: true, subtree: true });
+} catch (e) {}
 })();
 // ---- end safe init ----
   </script>
