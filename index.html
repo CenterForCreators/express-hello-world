@@ -215,6 +215,16 @@ const xumm = new Xumm(CONFIG.XUMM_API_KEY, {
   redirectUrl: window.location.href  // store and return to same page after wallet auth
 })
 
+xumm.on("ready", async () => {
+  const state = await xumm.state();
+  if (state?.me?.account) {
+    window.connectedAccount = state.me.account;
+    const el = document.getElementById('address');
+    if (el) el.textContent = state.me.account;
+  }
+});
+
+
 // Restore wallet immediately on return from Xaman (iPhone-safe)
 xumm.on('success', e => {
   window.connectedAccount = e.account;
