@@ -212,7 +212,8 @@
     };
 const client = new xrpl.Client(CONFIG.networkWss)
 const xumm = new Xumm(CONFIG.XUMM_API_KEY, {
-  redirectUrl: window.location.href  // store and return to same page after wallet auth
+ const xumm = new Xumm(CONFIG.XUMM_API_KEY, {
+  redirectUrl: "https://centerforcreators.com/nft-marketplace"  // fixed redirect URL for iPhone
 })
 
 xumm.on("ready", async () => {
