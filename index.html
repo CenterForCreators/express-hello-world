@@ -210,11 +210,29 @@
         { id: 'book1', name: 'The Power to Rise — Digital Collectible', priceCFC: '199', priceXRP: '20' }
       ]
     };
-
-    const client = new xrpl.Client(CONFIG.networkWss)
-    const xumm = new Xumm(CONFIG.XUMM_API_KEY, {  
+const client = new xrpl.Client(CONFIG.networkWss)
+const xumm = new Xumm(CONFIG.XUMM_API_KEY, {
   redirectUrl: window.location.href  // store and return to same page after wallet auth
 })
+
+// Restore wallet immediately on return from Xaman (iPhone-safe)
+xumm.on('success', e => {
+  window.connectedAccount = e.account;
+  const el = document.getElementById('address'); if (el) el.textContent = e.account;
+});
+
+// If already connected, hydrate UI on load
+if (xumm.user?.account) {
+  window.connectedAccount = xumm.user.account;
+  const el = document.getElementById('address'); if (el) el.textContent = e.account;
+}
+
+let connectedAccount = null
+
+const $ = sel => document.querySelector(sel)
+function setStatus(text){ $('#status').textContent = text }
+function setAddr(text){ $('#address').textContent = text }
+function showError(msg){ const b=document.getElementById('errorBox'); b.textContent=msg; b.style.display='block' }
 
     let connectedAccount = null
 
