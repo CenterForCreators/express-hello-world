@@ -1,13 +1,14 @@
-// ===== app.js (final faucet backend with working Xumm pay + CORS fix) =====
+// ===== app.js (final faucet backend with working Xumm pay + CORS fix) ===== 
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
 const cors = require("cors");
 const app = express();
 
-/* ---------- CORS (Allow GitHub + Unstoppable + IPFS) ---------- */
+/* ---------- CORS (Allow GitHub + Unstoppable + IPFS + main site) ---------- */
 app.use(cors({
   origin: [
+    "https://centerforcreators.com",
     "https://centerforcreators.github.io",
     "https://centerforcreators.nft",
     "https://cf-ipfs.com",
