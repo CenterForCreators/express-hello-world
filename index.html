@@ -782,15 +782,27 @@ function checkCaptcha(){
         bind('buy3cfc', function(){ payItemCFC('book'); });
         bind('buy3xrp', function(){ payItemXRP('book'); });
       }
-     if (document.readyState === 'loading') {
+     // ---- begin safe init (keeps wallet + claim working, no regressions) ----
+// Run wallet/core init immediately if your site defines it.
+if (typeof boot === 'function') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+}
+// Delay ONLY the payment button wiring to help Chrome finish loading SDKs.
+if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(bindAll, 500));
 } else {
   setTimeout(bindAll, 500);
 }
 try {
-  new MutationObserver(() => setTimeout(bindAll, 500)).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(() => setTimeout(bindAll, 500))
+    .observe(document.documentElement, { childList: true, subtree: true });
 } catch(e) {}
 })();
+// ---- end safe init ----
   </script>
 <script>
     (function(){
