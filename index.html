@@ -213,7 +213,8 @@
     };
 
     const client = new xrpl.Client(CONFIG.networkWss)
-    const xumm = new Xumm(CONFIG.XUMM_API_KEY)
+    const xumm = new Xumm(CONFIG.XUMM_API_KEY, { redirectUrl: "https://centerforcreators.com/nft-marketplace" })
+
     let connectedAccount = null
 
     const $ = sel => document.querySelector(sel)
