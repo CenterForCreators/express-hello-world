@@ -210,9 +210,40 @@
         { id: 'book1', name: 'The Power to Rise — Digital Collectible', priceCFC: '199', priceXRP: '20' }
       ]
     };
+const client = new xrpl.Client(CONFIG.networkWss)
+const xumm = new Xumm(CONFIG.XUMM_API_KEY, {
+  redirectUrl: window.location.href  // store and return to same page after wallet auth
+})
 
-    const client = new xrpl.Client(CONFIG.networkWss)
-    const xumm = new Xumm(CONFIG.XUMM_API_KEY)
+xumm.on("ready", async () => {
+  const state = await xumm.state();
+  if (state?.me?.account) {
+    window.connectedAccount = state.me.account;
+    const el = document.getElementById('address');
+    if (el) el.textContent = state.me.account;
+  }
+});
+
+
+// Restore wallet immediately on return from Xaman (iPhone-safe)
+xumm.on('success', e => {
+  window.connectedAccount = e.account;
+  const el = document.getElementById('address'); if (el) el.textContent = e.account;
+});
+
+// If already connected, hydrate UI on load
+if (xumm.user?.account) {
+  window.connectedAccount = xumm.user.account;
+  const el = document.getElementById('address'); if (el) el.textContent = e.account;
+}
+
+let connectedAccount = null
+
+const $ = sel => document.querySelector(sel)
+function setStatus(text){ $('#status').textContent = text }
+function setAddr(text){ $('#address').textContent = text }
+function showError(msg){ const b=document.getElementById('errorBox'); b.textContent=msg; b.style.display='block' }
+
     let connectedAccount = null
 
     const $ = sel => document.querySelector(sel)
@@ -782,9 +813,27 @@ function checkCaptcha(){
         bind('buy3cfc', function(){ payItemCFC('book'); });
         bind('buy3xrp', function(){ payItemXRP('book'); });
       }
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAll); else bindAll();
-      try { new MutationObserver(bindAll).observe(document.documentElement, { childList:true, subtree:true }); } catch(e){}
-    })();
+     // ---- begin safe init (keeps wallet + claim working, no regressions) ----
+// Run wallet/core init immediately if your site defines it.
+if (typeof boot === 'function') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+}
+// Delay ONLY the payment button wiring to help Chrome finish loading SDKs.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(bindAll, 500));
+} else {
+  setTimeout(bindAll, 500);
+}
+try {
+  new MutationObserver(() => setTimeout(bindAll, 500))
+    .observe(document.documentElement, { childList: true, subtree: true });
+} catch(e) {}
+})();
+// ---- end safe init ----
   </script>
 <script>
     (function(){
@@ -2015,22 +2064,65 @@ try {
     });
   }
 
-  // If you also have wireClaim()/ensureClaimUI()/ensureFaucetDivider()/ensureDividerCSS() earlier in the file, we just call them:
-  function boot(){
-    try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
-    try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
-    try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
+ function boot(){
+  try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
+  try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
+  try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
+
+  // Delay only the claim wiring by 300ms to improve Chrome wallet sync
+  setTimeout(() => {
     try { if (typeof wireClaim==='function') wireClaim(); } catch(e){}
-    ensureJoinForm();
-    wireJoin();
-    try { cleanTexts(); } catch(e){}
-  }
+  }, 300);
+  
+  ensureJoinForm();
+  wireJoin();
+  
+  try { cleanTexts(); } catch(e){}
+}
 
   if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', boot); }
   else { boot(); }
   try { new MutationObserver(boot).observe(document.documentElement, { childList:true, subtree:true }); } catch(e){}
 })();
 </script>
+<script>
+  document.getElementById('emailSubmit').addEventListener('click', async () => {
+    const emailInput = document.getElementById('emailInput');
+    const emailMsg = document.getElementById('emailMsg');
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+      emailMsg.textContent = 'Please enter a valid email.';
+      emailMsg.style.color = '#ff6b6b';
+      return;
+    }
+    
+    emailMsg.textContent = 'Submitting...';
+    emailMsg.style.color = '#9fb0d1';
 
-</body>
+    try {
+      const response = await fetch('https://cfc-faucet.onrender.com/api/join', {  // Updated to Render backend URL
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+
+      if (data.ok) {
+        emailMsg.textContent = 'Thanks for joining the list!';
+        emailMsg.style.color = '#1fcf7c';
+        emailInput.value = '';
+      } else {
+        emailMsg.textContent = 'Error: ' + (data.error || 'Please try again');
+        emailMsg.style.color = '#ff6b6b';
+      }
+    } catch (err) {
+      console.error(err);
+      emailMsg.textContent = 'Submission failed. Try again later.';
+      emailMsg.style.color = '#ff6b6b';
+    }
+  });
+</script>
+
+</body> 
 </html>
