@@ -2151,6 +2151,25 @@ try {
 })();
 
 </script>
+<script>
+// === FINAL FALLBACK: iOS/XaMaN session restore via xumm.ping() ===
+document.addEventListener('DOMContentLoaded', async () => {
+  const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
+  if (isIOS && window.xumm?.ping) {
+    try {
+      const pong = await window.xumm.ping();
+      if (pong?.account) {
+        window.connectedAccount = pong.account;
+        try { localStorage.setItem('xummAccount', pong.account); } catch(_) {}
+        if (typeof updateWallet === 'function') updateWallet();
+      }
+    } catch (err) {
+      console.warn('Ping session restore failed:', err);
+    }
+  }
+});
+</script>
+
 
 </body> 
 </html>
