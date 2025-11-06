@@ -2091,30 +2091,17 @@ try {
       emailMsg.style.color = '#ff6b6b';
     }
   });
-// iPhone/XaMaN reconnect handler
+// iPhone/XaMaN restore wallet after redirect
 document.addEventListener('visibilitychange', async () => {
-  const isMobileSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
-  if (document.visibilityState === 'visible' && isMobileSafari && window.xumm?.authorize) {
+  const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
+  if (document.visibilityState === 'visible' && isIOS && window.xumm?.authorize) {
     try {
       const { me } = await window.xumm.authorize({ force: true });
-      if (me && me.account) {
+      if (me?.account) {
         window.connectedAccount = me.account;
         if (typeof updateWallet === 'function') updateWallet();
       }
-    } catch(e){}
-  }
-});
-// iPhone-specific page restore handler (Safari fallback)
-window.addEventListener('pageshow', async (event) => {
-  const isMobileSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
-  if (isMobileSafari && event.persisted && window.xumm?.authorize) {
-    try {
-      const { me } = await window.xumm.authorize({ force: true });
-      if (me && me.account) {
-        window.connectedAccount = me.account;
-        if (typeof updateWallet === 'function') updateWallet();
-      }
-    } catch(e){}
+    } catch (err) {}
   }
 });
 
