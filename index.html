@@ -1625,7 +1625,7 @@ try {
           const { me } = await window.xumm.authorize();
           if (me && me.account){
             window.connectedAccount = me.account;
-            try{sessionStorage.setItem('cfc_addr', me.account);
+            try{ sessionStorage.setItem('cfc_addr', me.account);
  }catch(e){}
             updateWallet();
           }
@@ -2092,16 +2092,14 @@ try {
       emailMsg.style.color = '#ff6b6b';
     }
   });
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    try {
-      const prev = sessionStorage.getItem('cfc_addr');
-      if (prev && typeof updateWallet === 'function') {
-        window.connectedAccount = prev;
-        updateWallet();
-      }
-    } catch(e){}
-  }
+document.addEventListener('pageshow', () => {
+  try {
+    const prev = sessionStorage.getItem('cfc_addr');
+    if (prev && typeof updateWallet === 'function') {
+      window.connectedAccount = prev;
+      updateWallet();
+    }
+  } catch(e){}
 });
 
 </script>
