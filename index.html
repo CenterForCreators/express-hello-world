@@ -1625,7 +1625,8 @@ try {
           const { me } = await window.xumm.authorize();
           if (me && me.account){
             window.connectedAccount = me.account;
-            try{ localStorage.setItem('xummAccount', me.account); }catch(e){}
+            try{ sessionStorage.setItem('cfc_addr', me.account); }catch(e){}
+ 
             updateWallet();
           }
         } else {
