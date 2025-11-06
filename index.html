@@ -2091,7 +2091,10 @@ try {
       emailMsg.style.color = '#ff6b6b';
     }
   });
-// iPhone/XaMaN restore wallet after redirect
+
+ /* === FINAL, NON-DESTRUCTIVE FIX: iOS restore + single connect binding === */
+
+// 1) iOS: re-authorize when returning from XaMaN
 document.addEventListener('visibilitychange', async () => {
   const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
   if (document.visibilityState === 'visible' && isIOS && window.xumm?.authorize) {
@@ -2099,11 +2102,53 @@ document.addEventListener('visibilitychange', async () => {
       const { me } = await window.xumm.authorize({ force: true });
       if (me?.account) {
         window.connectedAccount = me.account;
+        try { localStorage.setItem('xummAccount', me.account); } catch(_) {}
         if (typeof updateWallet === 'function') updateWallet();
       }
-    } catch (err) {}
+    } catch (_) {}
   }
 });
+
+// 2) SDK success hook: when XUMM says we're connected, update UI & persist
+try {
+  if (window.xumm && typeof window.xumm.on === 'function') {
+    window.xumm.on('success', async (ev) => {
+      const acct = ev?.me?.account || ev?.account || (window.xumm.user && window.xumm.user.account);
+      if (acct) {
+        window.connectedAccount = acct;
+        try { localStorage.setItem('xummAccount', acct); } catch(_) {}
+        if (typeof updateWallet === 'function') updateWallet();
+      }
+    });
+  }
+} catch (_) {}
+
+// 3) Last-write-wins connect binding (prevents duplicate handlers from other blocks)
+(function ensureSingleConnect() {
+  var btn = document.getElementById('connectBtn');
+  if (!btn) return;
+  var clone = btn.cloneNode(true); // drops previous listeners without touching layout
+  btn.parentNode.replaceChild(clone, btn);
+
+  clone.addEventListener('click', async function (e) {
+    e.preventDefault();
+    try {
+      if (!window.xumm?.authorize) { alert('Xaman SDK not ready'); return; }
+      const res = await window.xumm.authorize();
+      const acct = res?.me?.account || res?.account || (window.xumm.user && window.xumm.user.account);
+      if (acct) {
+        window.connectedAccount = acct;
+        try { localStorage.setItem('xummAccount', acct); } catch(_) {}
+        if (typeof updateWallet === 'function') updateWallet();
+      } else {
+        // no-op: user cancelled
+      }
+    } catch (err) {
+      console.error('Xaman connect error', err);
+      alert('Connect failed. Please try again.');
+    }
+  });
+})();
 
 </script>
 
