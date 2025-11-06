@@ -60,10 +60,13 @@
     function hide(el){ el.style.display='none'; }
     function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
   </script>
+<script src="https://xumm.app/sdk/xumm.min.js"></script>
+<script>
+  try{ window.xumm = new Xumm("eebd4c17-c3ef-435b-b891-89afb99e259e"); }
+  catch(e){ console.error("Could not init XUMM SDK", e); }
+</script>
 </head>
 <body>
-<!-- Render-hosted SDKs -->
-<script onload="try{window.xumm=new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');}catch(e){console.error(e);}" src="https://xumm.app/sdk/xumm.min.js"></script>
 <script src="https://cfc-faucet.onrender.com/sdk/xrpl-latest-min.js"></script>
 <style>/* CFC-AUTO-STYLE */
   .server-waiting-url{ display:none !important; }
