@@ -2092,6 +2092,23 @@ try {
     }
   });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (!window.xumm?.ping) return;
+
+    // Try to restore wallet session silently (for iOS and desktop)
+    const info = await xumm.ping();
+    if (info && info.account) {
+      window.connectedAccount = info.account;
+      if (typeof updateWallet === 'function') updateWallet();
+    }
+
+  } catch (e) {
+    console.warn('Silent restore failed', e);
+  }
+});
+</script>
 
 </body> 
 </html>
