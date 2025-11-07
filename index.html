@@ -212,7 +212,21 @@
     };
 
     const client = new xrpl.Client(CONFIG.networkWss)
-       let connectedAccount = null
+    const xumm = new Xumm(CONFIG.XUMM_API_KEY)
+document.addEventListener('visibilitychange', async () => {
+  const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
+  if (document.visibilityState === 'visible' && isIOS && window.xumm?.ping) {
+    try {
+      const session = await xumm.ping();
+      if (session?.account) {
+        connectedAccount = session.account;
+        if (typeof updateWallet === 'function') updateWallet();
+      }
+    } catch (_) {}
+  }
+});
+
+    let connectedAccount = null
 
     const $ = sel => document.querySelector(sel)
     function setStatus(text){ $('#status').textContent = text }
@@ -1349,20 +1363,6 @@ try {
         return;
       }
       xumm = new Xumm(XUMM_API_KEY);
-document.addEventListener('visibilitychange', async () => {
-  const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
-  if (document.visibilityState === 'visible' && isIOS && window.xumm?.ping) {
-    try {
-      const session = await xumm.ping();
-      if (session?.account) {
-        connectedAccount = session.account;
-        if (typeof updateWallet === 'function') updateWallet();
-      }
-    } catch (_) {}
-  }
-});
-
-
       // Restore session if any
       xumm.on('ready', () => {
         setStatus('Xaman SDK ready');
