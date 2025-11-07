@@ -175,8 +175,8 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    // autofill to add Fee, Sequence, and set ~60-ledger TTL ✅
-    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 60 });
+    // autofill to add Fee, Sequence, and set ~120-ledger TTL ✅
+    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 120 });
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
