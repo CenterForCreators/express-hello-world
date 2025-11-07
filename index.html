@@ -213,19 +213,6 @@
 
     const client = new xrpl.Client(CONFIG.networkWss)
     const xumm = new Xumm(CONFIG.XUMM_API_KEY)
-document.addEventListener('visibilitychange', async () => {
-  const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
-  if (document.visibilityState === 'visible' && isIOS && window.xumm?.ping) {
-    try {
-      const session = await xumm.ping();
-      if (session?.account) {
-        connectedAccount = session.account;
-        if (typeof updateWallet === 'function') updateWallet();
-      }
-    } catch (_) {}
-  }
-});
-
     let connectedAccount = null
 
     const $ = sel => document.querySelector(sel)
@@ -1363,6 +1350,19 @@ try {
         return;
       }
       xumm = new Xumm(XUMM_API_KEY);
+
+  // Listen once: when wallet authorizes, set account & refresh UI
+  if (window.xumm && typeof window.xumm.on === 'function') {
+    window.xumm.on('success', async (ev) => {
+      const acct = ev?.me?.account || ev?.account;
+      if (acct) {
+        window.connectedAccount = acct;
+        try { localStorage.setItem('xummAccount', acct); } catch(_) {}
+        if (typeof updateWallet === 'function') updateWallet();
+      }
+    });
+  }
+
       // Restore session if any
       xumm.on('ready', () => {
         setStatus('Xaman SDK ready');
