@@ -5,10 +5,9 @@ const xrpl = require("xrpl");
 const cors = require("cors");
 const app = express();
 
-/* ---------- CORS (Allow GitHub + Unstoppable + IPFS + main site) ---------- */
+/* ---------- CORS (Allow GitHub + Unstoppable + IPFS) ---------- */
 app.use(cors({
   origin: [
-    "https://centerforcreators.com",
     "https://centerforcreators.github.io",
     "https://centerforcreators.nft",
     "https://cf-ipfs.com",
@@ -74,10 +73,7 @@ app.get("/api/pay-cfc", async (_req, res) => {
           value: "10"
         }
       },
-      options: { 
-        submit: true,
-        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
-      }
+      options: { submit: true }
     });
     console.log("Redirecting to:", link);
     return res.redirect(link);
@@ -96,10 +92,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
         Destination: PAY_DESTINATION,
         Amount: xrpl.xrpToDrops("5")
       },
-      options: { 
-        submit: true,
-        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
-      }
+      options: { submit: true }
     });
     console.log("Redirecting to:", link);
     return res.redirect(link);
@@ -109,27 +102,42 @@ app.get("/api/pay-xrp", async (_req, res) => {
   }
 });
 
-/* ---------- JOIN (updated to forward email to Google Sheets) ---------- */
-app.post('/api/join', async (req, res) => {
+/* ---------- BALANCES ---------- */
+app.get('/api/balances', async (req, res) => {
+  const account = (req.query.account || '').trim();
+  if (!account) return res.status(400).json({ ok: false, error: 'Missing account' });
+  try {
+    const client = new xrpl.Client('wss://xrplcluster.com');
+    await client.connect();
+    let xrp = null, cfc = null, hasTrust = false;
+    try {
+      const ai = await client.request({ command: 'account_info', account, ledger_index: 'validated' });
+      xrp = ai.result?.account_data?.Balance ? ai.result.account_data.Balance / 1_000_000 : null;
+    } catch {}
+    const issuer = process.env.CFC_ISSUER || process.env.ISSUER_CLASSIC;
+    const currency = process.env.CFC_CURRENCY || 'CFC';
+    if (issuer) {
+      try {
+        const al = await client.request({ command: 'account_lines', account, ledger_index: 'validated', peer: issuer });
+        const line = (al.result?.lines || []).find(l => l.currency === currency);
+        cfc = line ? line.balance : null;
+        hasTrust = !!line;
+      } catch {}
+    }
+    await client.disconnect();
+    return res.json({ ok: true, xrp, cfc, hasTrust });
+  } catch (e) {
+    console.error('balances error:', e);
+    return res.status(500).json({ ok: false, error: 'XRPL error' });
+  }
+});
+
+/* ---------- JOIN ---------- */
+app.post('/api/join', (req, res) => {
   const email = (req.body && req.body.email || '').trim();
   if (!email) return res.status(400).json({ ok: false, error: 'Missing email' });
-
   console.log('JOIN email:', email);
-
-  const scriptURL = "https://script.google.com/macros/s/AKfycbx4xRkESlayCqBmXV1GlYJMh90_WpfytBGbTMoLIt8oCq6MYMTxnghbFv7FjFQynxEQ/exec";
-
-  try {
-    const r = await fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ email })
-    });
-    const j = await r.json();
-    console.log('Sheets response:', j);
-    return res.json({ ok: true, sheetResponse: j });
-  } catch (e) {
-    console.error('Error saving email to Google Sheets:', e);
-    return res.status(500).json({ ok: false, error: 'Google Sheets error' });
-  }
+  return res.json({ ok: true });
 });
 
 /* ---------- FAUCET (real CFC send) ---------- */
@@ -175,8 +183,7 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    // autofill to add Fee, Sequence, and set ~120-ledger TTL ✅
-    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 120 });
+    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 40 });
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
