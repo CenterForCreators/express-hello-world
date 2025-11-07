@@ -157,11 +157,9 @@ app.post('/api/faucet', async (req, res) => {
       return res.status(500).json({ ok: false, error: 'Server faucet not configured' });
     }
 
-    // XRPL Client (stable public cluster; override with RIPPLED_URL if set)
-    const client = new xrpl.Client(process.env.RIPPLED_URL || 'wss://xrplcluster.com');
+    const client = new xrpl.Client(process.env.RIPPLED_URL || 'wss://s1.ripple.com');
     await client.connect();
 
-    // Require trustline first
     const al = await client.request({ command: 'account_lines', account, ledger_index: 'validated', peer: issuer });
     const hasLine = (al.result?.lines || []).some(l => l.currency === currency);
     if (!hasLine) {
@@ -171,7 +169,6 @@ app.post('/api/faucet', async (req, res) => {
 
     const wallet = xrpl.Wallet.fromSeed(seed);
 
-    // Build Payment TX
     const tx = {
       TransactionType: "Payment",
       Account: wallet.address,
@@ -179,12 +176,19 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    // Autofill adds Fee/Sequence and a safe TTL (~20 ledgers ≈ up to ~1 minute)
-    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 20 });
+    const filled = await client.autofill(tx, { max_ledger_offset: 20 });
 
-    // Sign + Submit
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
+
+    // ✅ Retry fix for iPhone/Safari expiration issue (no desktop impact)
+    if (result.result?.meta?.TransactionResult === 'temREDUNDANT') {
+      console.warn('Ledger expired, retrying faucet TX with new sequence...');
+      const refilled = await client.autofill(tx, { max_ledger_offset: 30 });
+      const resigned = wallet.sign(refilled);
+      const retryResult = await client.submitAndWait(resigned.tx_blob);
+      result.result = retryResult.result; // overwrite result with retry
+    }
 
     await client.disconnect();
 
@@ -192,10 +196,7 @@ app.post('/api/faucet', async (req, res) => {
       grants.set(account, now);
       return res.json({ ok: true, hash: result.result?.tx_json?.hash });
     } else {
-      return res.status(500).json({
-        ok: false,
-        error: result.result?.meta?.TransactionResult || 'Submit failed'
-      });
+      return res.status(500).json({ ok: false, error: result.result?.meta?.TransactionResult || 'Submit failed' });
     }
   } catch (e) {
     console.error('faucet error:', e);
