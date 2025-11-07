@@ -175,7 +175,8 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    const filled = await client.autofill(tx, { max_ledger_offset: 20 });
+    // ✅ Increased ledger window to avoid XRPL latency issues
+    const filled = await client.autofill(tx, { max_ledger_offset: 60 });
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
