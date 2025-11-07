@@ -175,7 +175,7 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    const filled = await client.autofill(tx, { max_ledger_offset: 20 }); // Original working logic
+    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 40 }); // ✅ Working version
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
