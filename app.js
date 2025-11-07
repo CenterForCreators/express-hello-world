@@ -74,7 +74,7 @@ app.get("/api/pay-cfc", async (_req, res) => {
           value: "10"
         }
       },
-      options: {
+      options: { 
         submit: true,
         return_url: { web: "https://centerforcreators.com/nft-marketplace" }
       }
@@ -96,7 +96,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
         Destination: PAY_DESTINATION,
         Amount: xrpl.xrpToDrops("5")
       },
-      options: {
+      options: { 
         submit: true,
         return_url: { web: "https://centerforcreators.com/nft-marketplace" }
       }
@@ -168,7 +168,6 @@ app.post('/api/faucet', async (req, res) => {
     }
 
     const wallet = xrpl.Wallet.fromSeed(seed);
-
     const tx = {
       TransactionType: "Payment",
       Account: wallet.address,
@@ -176,19 +175,10 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    const filled = await client.autofill(tx, { max_ledger_offset: 20 });
+    const filled = await client.autofill(tx, { maxLedgerVersionOffset: 40 });
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
-
-    // ✅ Retry fix for iPhone/Safari expiration issue (no desktop impact)
-    if (result.result?.meta?.TransactionResult === 'temREDUNDANT') {
-      console.warn('Ledger expired, retrying faucet TX with new sequence...');
-      const refilled = await client.autofill(tx, { max_ledger_offset: 30 });
-      const resigned = wallet.sign(refilled);
-      const retryResult = await client.submitAndWait(resigned.tx_blob);
-      result.result = retryResult.result; // overwrite result with retry
-    }
 
     await client.disconnect();
 
@@ -196,7 +186,10 @@ app.post('/api/faucet', async (req, res) => {
       grants.set(account, now);
       return res.json({ ok: true, hash: result.result?.tx_json?.hash });
     } else {
-      return res.status(500).json({ ok: false, error: result.result?.meta?.TransactionResult || 'Submit failed' });
+      return res.status(500).json({
+        ok: false,
+        error: result.result?.meta?.TransactionResult || 'Submit failed'
+      });
     }
   } catch (e) {
     console.error('faucet error:', e);
