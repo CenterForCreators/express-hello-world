@@ -1,3 +1,137 @@
+// ===== app.js (final faucet backend with working Xumm pay + CORS fix) =====
+const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
+const express = require("express");
+const xrpl = require("xrpl");
+const cors = require("cors");
+const app = express();
+
+/* ---------- CORS (Allow GitHub + Unstoppable + IPFS + main site) ---------- */
+app.use(cors({
+  origin: [
+    "https://centerforcreators.com",
+    "https://centerforcreators.github.io",
+    "https://centerforcreators.nft",
+    "https://cf-ipfs.com",
+    "https://dweb.link"
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
+app.use(express.json());
+
+/* ---------- HEALTH ---------- */
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
+/* ---------- SDK serve ---------- */
+app.get('/sdk/xumm.min.js', async (_req, res) => {
+  const r = await fetch('https://xumm.app/assets/cdn/xumm.min.js');
+  res.type('application/javascript').send(await r.text());
+});
+
+app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
+  const r = await fetch('https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js');
+  res.type('application/javascript').send(await r.text());
+});
+
+/* ---------- PAY (live Xumm redirect) ---------- */
+const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
+const XUMM_API_SECRET = process.env.XUMM_API_SECRET || "";
+const PAY_DESTINATION = process.env.PAY_DESTINATION || "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"; // issuer wallet
+
+async function createXummPayload(payload) {
+  const r = await fetch("https://xumm.app/api/v1/platform/payload", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": XUMM_API_KEY,
+      "x-api-secret": XUMM_API_SECRET
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const j = await r.json();
+  console.log("Xumm payload response:", j);
+
+  if (!j.next || !j.next.always) {
+    console.error("Invalid Xumm API response:", j);
+    throw new Error("Xumm API key/secret invalid or response malformed");
+  }
+
+  return j.next.always; // return redirect link
+}
+
+// Pay CFC
+app.get("/api/pay-cfc", async (_req, res) => {
+  try {
+    const link = await createXummPayload({
+      txjson: {
+        TransactionType: "Payment",
+        Destination: PAY_DESTINATION,
+        Amount: {
+          currency: "CFC",
+          issuer: PAY_DESTINATION,
+          value: "10"
+        }
+      },
+      options: {
+        submit: true,
+        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+      }
+    });
+    console.log("Redirecting to:", link);
+    return res.redirect(link);
+  } catch (e) {
+    console.error("pay-cfc error:", e);
+    return res.status(500).json({ ok: false, error: "Xumm error" });
+  }
+});
+
+// Pay XRP
+app.get("/api/pay-xrp", async (_req, res) => {
+  try {
+    const link = await createXummPayload({
+      txjson: {
+        TransactionType: "Payment",
+        Destination: PAY_DESTINATION,
+        Amount: xrpl.xrpToDrops("5")
+      },
+      options: {
+        submit: true,
+        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+      }
+    });
+    console.log("Redirecting to:", link);
+    return res.redirect(link);
+  } catch (e) {
+    console.error("pay-xrp error:", e);
+    return res.status(500).json({ ok: false, error: "Xumm error" });
+  }
+});
+
+/* ---------- JOIN (updated to forward email to Google Sheets) ---------- */
+app.post('/api/join', async (req, res) => {
+  const email = (req.body && req.body.email || '').trim();
+  if (!email) return res.status(400).json({ ok: false, error: 'Missing email' });
+
+  console.log('JOIN email:', email);
+
+  const scriptURL = "https://script.google.com/macros/s/AKfycbx4xRkESlayCqBmXV1GlYJMh90_WpfytBGbTMoLIt8oCq6MYMTxnghbFv7FjFQynxEQ/exec";
+
+  try {
+    const r = await fetch(scriptURL, {
+      method: "POST",
+      body: new URLSearchParams({ email })
+    });
+    const j = await r.json();
+    console.log('Sheets response:', j);
+    return res.json({ ok: true, sheetResponse: j });
+  } catch (e) {
+    console.error('Error saving email to Google Sheets:', e);
+    return res.status(500).json({ ok: false, error: 'Google Sheets error' });
+  }
+});
+
 /* ---------- FAUCET (real CFC send) ---------- */
 const grants = new Map();
 
@@ -23,10 +157,11 @@ app.post('/api/faucet', async (req, res) => {
       return res.status(500).json({ ok: false, error: 'Server faucet not configured' });
     }
 
-    const client = new xrpl.Client(process.env.RIPPLED_URL || 'wss://s2.ripple.com');
+    // XRPL Client (stable public cluster; override with RIPPLED_URL if set)
+    const client = new xrpl.Client(process.env.RIPPLED_URL || 'wss://xrplcluster.com');
     await client.connect();
 
-    // Check Trustline first
+    // Require trustline first
     const al = await client.request({ command: 'account_lines', account, ledger_index: 'validated', peer: issuer });
     const hasLine = (al.result?.lines || []).some(l => l.currency === currency);
     if (!hasLine) {
@@ -44,7 +179,7 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    // autofill to add Fee, Sequence, and set ~20-ledger TTL
+    // Autofill adds Fee/Sequence and a safe TTL (~20 ledgers ≈ up to ~1 minute)
     const filled = await client.autofill(tx, { maxLedgerVersionOffset: 20 });
 
     // Sign + Submit
@@ -67,3 +202,16 @@ app.post('/api/faucet', async (req, res) => {
     return res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
+
+/* ---------- ROOT ---------- */
+app.get("/", (_req, res) =>
+  res.type('html').send(`<!doctype html><html><body><h1>Hello from Render</h1></body></html>`)
+);
+
+/* ---------- START ---------- */
+const port = process.env.PORT || 10000;
+const server = app.listen(port, () => console.log(`Server listening on ${port}`));
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
+
+// ===== end app.js =====
