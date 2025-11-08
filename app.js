@@ -109,26 +109,47 @@ app.get("/api/pay-xrp", async (_req, res) => {
   }
 });
 
-/* ---------- JOIN (updated to forward email to Google Sheets) ---------- */
-app.post('/api/join', async (req, res) => {
-  const email = (req.body && req.body.email || '').trim();
-  if (!email) return res.status(400).json({ ok: false, error: 'Missing email' });
+/* ---------- Xaman Sign-In (no redirect; iOS-safe) ---------- */
+async function xummFetch(path, opts = {}) {
+  return fetch(`https://xumm.app/api/v1/platform/${path}`, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': XUMM_API_KEY,
+      'x-api-secret': XUMM_API_SECRET,
+      ...(opts.headers || {})
+    }
+  });
+}
 
-  console.log('JOIN email:', email);
-
-  const scriptURL = "https://script.google.com/macros/s/AKfycbx4xRkESlayCqBmXV1GlYJMh90_WpfytBGbTMoLIt8oCq6MYMTxnghbFv7FjFQynxEQ/exec";
-
+// Start login: create a SignIn payload, return uuid + link
+app.post('/api/auth/start', async (_req, res) => {
   try {
-    const r = await fetch(scriptURL, {
-      method: "POST",
-      body: new URLSearchParams({ email })
+    const r = await xummFetch('payload', {
+      method: 'POST',
+      body: JSON.stringify({
+        txjson: { TransactionType: 'SignIn' },
+        options: { submit: false } // no return_url (iOS-safe)
+      })
     });
     const j = await r.json();
-    console.log('Sheets response:', j);
-    return res.json({ ok: true, sheetResponse: j });
+    if (!j?.uuid || !j?.next?.always) return res.status(500).json({ ok:false, error:'Bad Xaman response' });
+    res.json({ ok:true, uuid:j.uuid, link:j.next.always });
   } catch (e) {
-    console.error('Error saving email to Google Sheets:', e);
-    return res.status(500).json({ ok: false, error: 'Google Sheets error' });
+    res.status(500).json({ ok:false, error:String(e.message||e) });
+  }
+});
+
+// Poll login status by uuid: signed? which account?
+app.get('/api/auth/status/:uuid', async (req, res) => {
+  try {
+    const r = await xummFetch(`payload/${req.params.uuid}`);
+    const j = await r.json();
+    const signed = !!j?.response?.signed;
+    const account = j?.response?.account || null;
+    res.json({ ok:true, signed, account });
+  } catch (e) {
+    res.status(500).json({ ok:false, error:String(e.message||e) });
   }
 });
 
