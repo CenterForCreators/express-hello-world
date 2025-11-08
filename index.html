@@ -2092,45 +2092,6 @@ try {
     }
   });
 </script>
-<script>
-  // iOS XUMM Wallet Return Handler (non-breaking)
-  (function () {
-    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    // Only run this logic on iOS (Safari)
-    if (isiOS) {
-      document.addEventListener("visibilitychange", async () => {
-        if (!document.hidden && window.xumm) {
-          try {
-            const acct = await window.xumm.user.account;
-            if (acct) {
-              console.log("Wallet auto-resumed for iOS:", acct);
-              // Optional: update UI here if your wallet button doesn't auto-update
-            }
-          } catch (e) {
-            console.warn("iOS resume failed:", e);
-          }
-        }
-      });
-    }
-  })();
-</script>
-<script>
-  (function () {
-    const url = new URL(window.location.href);
-
-    // If returned from XUMM and wallet isn't connected, retry session
-    if (url.searchParams.get("xumm") === "return" && window.xumm) {
-      window.xumm.user.account.then(acct => {
-        if (acct) {
-          console.log("Wallet reconnected via web return:", acct);
-          // Optionally: trigger any UI update if button isn't auto-updating
-        }
-      }).catch(err => console.warn(err));
-    }
-  })();
-</script>
-
 
 </body> 
 </html>
