@@ -76,7 +76,7 @@ app.get("/api/pay-cfc", async (_req, res) => {
       },
       options: {
         submit: true,
-        return_url: { web: "https://centerforcreators.com/nft-marketplace?xumm=return" }
+        return_url: { web: "https://centerforcreators.github.io/express-hello-world/?xumm=return" }
       }
     });
     console.log("Redirecting to:", link);
@@ -98,7 +98,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
       },
       options: {
         submit: true,
-        return_url: { web: "https://centerforcreators.com/nft-marketplace?xumm=return" }
+        return_url: { web: "https://centerforcreators.github.io/express-hello-world/?xumm=return" }
       }
     });
     console.log("Redirecting to:", link);
