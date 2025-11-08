@@ -1399,26 +1399,54 @@ try {
     refreshBalances(address);
   }
 
-  // Xaman official browser connect logic (iOS-safe)
+ // === Xaman-based Connect Logic (iOS + Desktop Safe) ===
+
+// 1. Initialize the SDK (this line should already be in your file)
+const xumm = new Xumm(CONFIG.XUMM_API_KEY);
+
+// 2. Listen for successful authorization from Xaman (wallet connect)
+xumm.on('success', async (payload) => {
+  console.log('✅ Wallet connected:', payload);
+  const account = payload?.me?.account;
+
+  if (account) {
+    window.connectedAccount = account;
+    try { localStorage.setItem('xummAccount', account); } catch (_) {}
+
+    // Update UI if available
+    if (typeof updateWallet === 'function') updateWallet();
+
+    // ✅ Redirect user after success
+    window.location.href = 'https://centerforcreators.com/nft-marketplace';
+  }
+});
+
+// 3. Connect function (called when Connect button is clicked)
+async function connectWithXaman() {
+  try {
+    const request = await xumm.payload.create({
+      TransactionType: 'SignIn'
+    });
+
+    if (navigator.userAgent.includes('iPhone')) {
+      // iPhone behavior – open Xaman app directly
+      window.location.href = request.next.always;
+    } else {
+      // Desktop – QR flow is handled automatically
+      console.log('Scan QR Code or approve payload in Xaman app.');
+    }
+  } catch (e) {
+    console.error('Connect Error:', e);
+    alert('Unable to connect – please try again.');
+  }
+}
+
+// 4. Attach handler to existing Connect button
 const connectBtn = document.getElementById('connectBtn');
 if (connectBtn) {
-  connectBtn.addEventListener('click', async (e) => {
+  connectBtn.addEventListener('click', (e) => {
     e.preventDefault();
-
-    try {
-      // Create a SignIn payload
-      const payloadResponse = await xumm.payload.create({
-        TransactionType: 'SignIn'
-      });
-
-      // Show QR on screen OR redirect (mobile)
-      if (payloadResponse?.next?.always) {
-        window.location.href = payloadResponse.next.always;
-      }
-    } catch (err) {
-      console.error('Xaman Connect Error:', err);
-      alert('Failed to connect with wallet. Please try again.');
-    }
+    connectWithXaman();
   });
 }
 
