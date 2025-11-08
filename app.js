@@ -1,5 +1,4 @@
-
-// ===== app.js (final faucet backend with working Xumm pay + CORS fix) ===== 
+// ===== app.js (final faucet backend with working Xumm pay + CORS fix + iOS redirect fix) ===== 
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
@@ -20,6 +19,14 @@ allowedHeaders: ["Content-Type"]
 }));
 
 app.use(express.json());
+
+/* ---------- HOST REDIRECT (force main domain) ---------- */
+app.use((req, res, next) => {
+  if (req.hostname === "centerforcreators.github.io") {
+    return res.redirect(301, "https://centerforcreators.com/nft-marketplace");
+  }
+  next();
+});
 
 /* ---------- HEALTH ---------- */
 app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -77,7 +84,9 @@ value: "10"
 },
 options: { 
 submit: true,
-return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+return_url: { 
+web: "https://centerforcreators.com/nft-marketplace#xummReturn=1&payload={{payload_uuidv4}}" 
+}
 }
 });
 console.log("Redirecting to:", link);
@@ -99,7 +108,9 @@ Amount: xrpl.xrpToDrops("5")
 },
 options: { 
 submit: true,
-return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+return_url: { 
+web: "https://centerforcreators.com/nft-marketplace#xummReturn=1&payload={{payload_uuidv4}}" 
+}
 }
 });
 console.log("Redirecting to:", link);
