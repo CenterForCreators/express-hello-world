@@ -1399,31 +1399,28 @@ try {
     refreshBalances(address);
   }
 
-  // === iPhone-only XAMAN Connect Fix ===
-(function () {
-  const isIOS = /iP(hone|od|ad)/i.test(navigator.userAgent);
-  if (!isIOS) return; // Only apply on iPhone/iPad
-
-  const btn = document.getElementById('connectBtn');
-  if (!btn) return;
-
-  btn.addEventListener('click', (e) => {
+  // Xaman official browser connect logic (iOS-safe)
+const connectBtn = document.getElementById('connectBtn');
+if (connectBtn) {
+  connectBtn.addEventListener('click', async (e) => {
     e.preventDefault();
-    e.stopPropagation();
 
-    // Create SignIn payload using XUMM SDK with submit:false (no redirect)
-    xumm.payload.create({
-      TransactionType: 'SignIn'
-    }).then(payload => {
-      if (payload?.next?.always) {
-        window.location.href = payload.next.always; // Open Xaman app
+    try {
+      // Create a SignIn payload
+      const payloadResponse = await xumm.payload.create({
+        TransactionType: 'SignIn'
+      });
+
+      // Show QR on screen OR redirect (mobile)
+      if (payloadResponse?.next?.always) {
+        window.location.href = payloadResponse.next.always;
       }
-    }).catch(err => {
-      console.error('iOS Connect Error:', err);
-      alert('Unable to connect – try again.');
-    });
-  }, { once: false });
-})();
+    } catch (err) {
+      console.error('Xaman Connect Error:', err);
+      alert('Failed to connect with wallet. Please try again.');
+    }
+  });
+}
 
   function generateCaptchaIfNeeded() {
     if (!captchaA || !captchaB || !captchaInput) return;
