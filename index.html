@@ -2,6 +2,18 @@
 
 <html>
 <head>
+<script>
+  (function () {
+    var wanted = 'centerforcreators.com';
+    if (location.hostname !== wanted) {
+      var path = '/nft-marketplace';
+      var qs   = location.search || '';
+      var hash = location.hash   || '';
+      location.replace('https://' + wanted + path + qs + hash);
+    }
+  })();
+</script>
+
 <!-- BUILD TAG: CFC-OK -->
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
