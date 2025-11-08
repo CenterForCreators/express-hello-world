@@ -1350,48 +1350,6 @@ try {
         return;
       }
       xumm = new Xumm(XUMM_API_KEY);
-
-async function connectWithXamanNoRedirect() {
-  try {
-    // 1) Ask backend to create SignIn payload
-    const r = await fetch('/api/auth/start', { method:'POST' });
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'start failed');
-
-    // 2) On iPhone: open Xaman app; on desktop: it will also work
-    window.location.href = j.link;
-
-    // 3) Poll backend for signed status (no redirect needed)
-    const started = Date.now();
-    const poll = setInterval(async () => {
-      try {
-        const s = await fetch(`/api/auth/status/${j.uuid}`).then(r=>r.json());
-        if (s.ok && s.signed && s.account) {
-          clearInterval(poll);
-          window.connectedAccount = s.account;
-          try { localStorage.setItem('xummAccount', s.account); } catch(_) {}
-          if (typeof updateWallet === 'function') updateWallet();
-        } else if (Date.now() - started > 120000) {
-          clearInterval(poll); // timeout after 2 min
-        }
-      } catch (_) {}
-    }, 1500);
-  } catch (e) {
-    console.error('Connect failed', e);
-    alert('Connect failed. Please try again.');
-  }
-}
-
-// Hook your existing Connect button to use this (only on iPhone if you want)
-const btn = document.getElementById('connectBtn');
-if (btn) {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    connectWithXamanNoRedirect();
-  });
-}
-
-
       // Restore session if any
       xumm.on('ready', () => {
         setStatus('Xaman SDK ready');
@@ -1441,20 +1399,31 @@ if (btn) {
     refreshBalances(address);
   }
 
-  async function handleConnect() {
-    try {
-      // If already connected, just ensure UI is up to date
-      if (connectedAccount && xumm?.user?.account) {
-        applyConnected(connectedAccount);
-        return;
+  // === iPhone-only XAMAN Connect Fix ===
+(function () {
+  const isIOS = /iP(hone|od|ad)/i.test(navigator.userAgent);
+  if (!isIOS) return; // Only apply on iPhone/iPad
+
+  const btn = document.getElementById('connectBtn');
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Create SignIn payload using XUMM SDK with submit:false (no redirect)
+    xumm.payload.create({
+      TransactionType: 'SignIn'
+    }).then(payload => {
+      if (payload?.next?.always) {
+        window.location.href = payload.next.always; // Open Xaman app
       }
-      setStatus('Connecting wallet...');
-      await xumm.authorize();
-      // `success` event will update UI
-    } catch (e) {
-      setStatus('Connection canceled or failed.');
-    }
-  }
+    }).catch(err => {
+      console.error('iOS Connect Error:', err);
+      alert('Unable to connect – try again.');
+    });
+  }, { once: false });
+})();
 
   function generateCaptchaIfNeeded() {
     if (!captchaA || !captchaB || !captchaInput) return;
