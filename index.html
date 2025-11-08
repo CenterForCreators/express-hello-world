@@ -2105,6 +2105,19 @@ try {
     location.reload();
   }
 </script>
+<script>
+  // Resume XUMM session on iOS after returning from the wallet
+  (function(){
+    if (!window.xumm) return;
+    window.xumm.on('ready', async () => {
+      try {
+        const acct = await window.xumm.user.account;
+        // If XUMM left a valid session, acct will be truthy; you can update your UI state here if needed.
+        console.log('XUMM ready; account:', acct || '(none)');
+      } catch(e){ console.warn('XUMM resume check:', e); }
+    });
+  })();
+</script>
 
 
 </body> 
