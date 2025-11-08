@@ -2107,16 +2107,30 @@ try {
 </script>
 <script>
   // Resume XUMM session on iOS after returning from the wallet
-  (function(){
+  setTimeout(() => {
     if (!window.xumm) return;
     window.xumm.on('ready', async () => {
       try {
         const acct = await window.xumm.user.account;
-        // If XUMM left a valid session, acct will be truthy; you can update your UI state here if needed.
         console.log('XUMM ready; account:', acct || '(none)');
       } catch(e){ console.warn('XUMM resume check:', e); }
     });
-  })();
+
+    // Detect app returning after wallet use on iPhone
+    window.addEventListener('visibilitychange', async () => {
+      if (!document.hidden && window.xumm) {
+        try {
+          const acct = await window.xumm.user.account;
+          if (acct) {
+            console.log('Wallet reconnected after XUMM return:', acct);
+            // You can also call your UI update logic here if needed
+          }
+        } catch(e) {
+          console.warn('Wallet auto-resume attempt failed:', e);
+        }
+      }
+    });
+  }, 500);
 </script>
 
 
