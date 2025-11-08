@@ -763,9 +763,9 @@ function checkCaptcha(){
 </script>
 <script>
     // Unified pay functions (server redirect via your Render backend)
-    function payCFC(){ window.open('https://cfc-faucet.onrender.com/api/pay-cfc','_blank'); }
+    function payRLUSD(){ window.open('https://cfc-faucet.onrender.com/api/pay-rlusd','_blank'); }
     function payXRP(){ window.open('https://cfc-faucet.onrender.com/api/pay-xrp','_blank'); }
-    function payItemCFC(label){ window.open('https://cfc-faucet.onrender.com/api/pay-cfc','_blank'); }
+    function payItemRLUSD(label){ window.open('https://cfc-faucet.onrender.com/api/pay-rlusd','_blank'); }
     function payItemXRP(label){ window.open('https://cfc-faucet.onrender.com/api/pay-xrp','_blank'); }
   </script>
 <script>
@@ -775,11 +775,11 @@ function checkCaptcha(){
         if (el && !el.__bound){ el.__bound = true; el.addEventListener('click', function(ev){ ev.preventDefault(); fn(); }); }
       }
       function bindAll(){
-        bind('buy1cfc', function(){ payItemCFC('service'); });
+        bind('buy1rlusd', function(){ payItemRLUSD('service'); });
         bind('buy1xrp', function(){ payItemXRP('service'); });
-        bind('buy2cfc', function(){ payItemCFC('workshop'); });
+        bind('buy2rlusd', function(){ payItemRLUSD('workshop'); });
         bind('buy2xrp', function(){ payItemXRP('workshop'); });
-        bind('buy3cfc', function(){ payItemCFC('book'); });
+        bind('buy3rlusd', function(){ payItemRLUSD('book'); });
         bind('buy3xrp', function(){ payItemXRP('book'); });
       }
      // ---- begin safe init (keeps wallet + claim working, no regressions) ----
