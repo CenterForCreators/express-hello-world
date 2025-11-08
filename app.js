@@ -1,4 +1,3 @@
-
 // ===== app.js (final faucet backend with working Xumm pay + CORS fix) ===== 
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
@@ -62,15 +61,15 @@ throw new Error("Xumm API key/secret invalid or response malformed");
 return j.next.always; // return redirect link
 }
 
-// Pay CFC
-app.get("/api/pay-cfc", async (_req, res) => {
+// Pay RLUSD (was Pay CFC)
+app.get("/api/pay-rlusd", async (_req, res) => {
 try {
 const link = await createXummPayload({
 txjson: {
 TransactionType: "Payment",
 Destination: PAY_DESTINATION,
 Amount: {
-currency: "CFC",
+currency: "RLUSD", // changed from CFC to RLUSD
 issuer: PAY_DESTINATION,
 value: "10"
 }
@@ -83,12 +82,12 @@ return_url: { web: "https://centerforcreators.com/nft-marketplace" }
 console.log("Redirecting to:", link);
 return res.redirect(link);
 } catch (e) {
-console.error("pay-cfc error:", e);
+console.error("pay-rlusd error:", e);
 return res.status(500).json({ ok: false, error: "Xumm error" });
 }
 });
 
-// Pay XRP
+// Pay XRP (unchanged)
 app.get("/api/pay-xrp", async (_req, res) => {
 try {
 const link = await createXummPayload({
