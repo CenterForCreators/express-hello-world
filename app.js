@@ -1,4 +1,4 @@
-// ===== app.js (final faucet backend with working Xumm pay + CORS fix + iOS redirect fix) ===== 
+// ===== app.js (final faucet backend with enhanced Xumm mobile return fix) ===== 
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
@@ -69,6 +69,15 @@ throw new Error("Xumm API key/secret invalid or response malformed");
 return j.next.always; // return redirect link
 }
 
+// shared return URL config for both endpoints
+const xummReturnConfig = {
+  submit: true,
+  return_url: {
+    web: "https://centerforcreators.com/nft-marketplace",
+    app: "https://xumm.app/detect/xapp://centerforcreators.com/nft-marketplace"
+  }
+};
+
 // Pay CFC
 app.get("/api/pay-cfc", async (_req, res) => {
 try {
@@ -82,12 +91,7 @@ issuer: PAY_DESTINATION,
 value: "10"
 }
 },
-options: { 
-submit: true,
-return_url: { 
-web: "https://centerforcreators.com/nft-marketplace#xummReturn=1&payload={{payload_uuidv4}}" 
-}
-}
+options: xummReturnConfig
 });
 console.log("Redirecting to:", link);
 return res.redirect(link);
@@ -106,12 +110,7 @@ TransactionType: "Payment",
 Destination: PAY_DESTINATION,
 Amount: xrpl.xrpToDrops("5")
 },
-options: { 
-submit: true,
-return_url: { 
-web: "https://centerforcreators.com/nft-marketplace#xummReturn=1&payload={{payload_uuidv4}}" 
-}
-}
+options: xummReturnConfig
 });
 console.log("Redirecting to:", link);
 return res.redirect(link);
