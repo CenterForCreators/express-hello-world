@@ -2092,6 +2092,20 @@ try {
     }
   });
 </script>
+<script>
+  if (location.hash.includes("xummReturn")) {
+    const params = new URLSearchParams(location.hash.substring(1));
+    const payload = params.get("payload");
+    if (payload) {
+      localStorage.setItem("xumm_payload", payload);
+    }
+    // Replace URL with clean version after storing payload
+    history.replaceState(null, "", location.pathname);
+    // Optionally auto-refresh or resume session here
+    location.reload();
+  }
+</script>
+
 
 </body> 
 </html>
