@@ -1,4 +1,4 @@
-// ===== app.js (restored working + host redirect) =====
+// ===== app.js (restored working + host redirect + xumm return flag) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
@@ -76,7 +76,7 @@ app.get("/api/pay-cfc", async (_req, res) => {
       },
       options: {
         submit: true,
-        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+        return_url: { web: "https://centerforcreators.com/nft-marketplace?xumm=return" }
       }
     });
     console.log("Redirecting to:", link);
@@ -98,7 +98,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
       },
       options: {
         submit: true,
-        return_url: { web: "https://centerforcreators.com/nft-marketplace" }
+        return_url: { web: "https://centerforcreators.com/nft-marketplace?xumm=return" }
       }
     });
     console.log("Redirecting to:", link);
