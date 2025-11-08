@@ -2,18 +2,6 @@
 
 <html>
 <head>
-<script>
-  (function () {
-    var wanted = 'centerforcreators.com';
-    if (location.hostname !== wanted) {
-      var path = '/nft-marketplace';
-      var qs   = location.search || '';
-      var hash = location.hash   || '';
-      location.replace('https://' + wanted + path + qs + hash);
-    }
-  })();
-</script>
-
 <!-- BUILD TAG: CFC-OK -->
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
@@ -2105,44 +2093,27 @@ try {
   });
 </script>
 <script>
-  if (location.hash.includes("xummReturn")) {
-    const params = new URLSearchParams(location.hash.substring(1));
-    const payload = params.get("payload");
-    if (payload) {
-      localStorage.setItem("xumm_payload", payload);
-    }
-    // Replace URL with clean version after storing payload
-    history.replaceState(null, "", location.pathname);
-    // Optionally auto-refresh or resume session here
-    location.reload();
-  }
-</script>
-<script>
-  // Resume XUMM session on iOS after returning from the wallet
-  setTimeout(() => {
-    if (!window.xumm) return;
-    window.xumm.on('ready', async () => {
-      try {
-        const acct = await window.xumm.user.account;
-        console.log('XUMM ready; account:', acct || '(none)');
-      } catch(e){ console.warn('XUMM resume check:', e); }
-    });
+  // iOS XUMM Wallet Return Handler (non-breaking)
+  (function () {
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    // Detect app returning after wallet use on iPhone
-    window.addEventListener('visibilitychange', async () => {
-      if (!document.hidden && window.xumm) {
-        try {
-          const acct = await window.xumm.user.account;
-          if (acct) {
-            console.log('Wallet reconnected after XUMM return:', acct);
-            // You can also call your UI update logic here if needed
+    // Only run this logic on iOS (Safari)
+    if (isiOS) {
+      document.addEventListener("visibilitychange", async () => {
+        if (!document.hidden && window.xumm) {
+          try {
+            const acct = await window.xumm.user.account;
+            if (acct) {
+              console.log("Wallet auto-resumed for iOS:", acct);
+              // Optional: update UI here if your wallet button doesn't auto-update
+            }
+          } catch (e) {
+            console.warn("iOS resume failed:", e);
           }
-        } catch(e) {
-          console.warn('Wallet auto-resume attempt failed:', e);
         }
-      }
-    });
-  }, 500);
+      });
+    }
+  })();
 </script>
 
 
