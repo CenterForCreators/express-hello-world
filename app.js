@@ -37,7 +37,7 @@ res.type('application/javascript').send(await r.text());
 /* ---------- PAY (live Xumm redirect) ---------- */
 const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
 const XUMM_API_SECRET = process.env.XUMM_API_SECRET || "";
-const PAY_DESTINATION = process.env.PAY_DESTINATION || "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"; // issuer wallet
+const PAY_DESTINATION = process.env.PAY_DESTINATION || "rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd"; // updated to RU address
 
 async function createXummPayload(payload) {
 const r = await fetch("https://xumm.app/api/v1/platform/payload", {
