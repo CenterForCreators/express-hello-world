@@ -175,27 +175,40 @@ Destination: account,
 Amount: { currency, issuer, value }
 };
 
-// ✅ Increased ledger window to avoid XRPL latency issues
-const filled = await client.autofill(tx, { max_ledger_offset: 60 });
-
 const signed = wallet.sign(filled);
-const result = await client.submitAndWait(signed.tx_blob);
+
+let result;
+try {
+  // Try normal path
+  result = await client.submitAndWait(signed.tx_blob);
+} catch (err) {
+  // Fallback for temREDUNDANT or late validation: check tx by hash
+  try {
+    const txq = await client.request({ command: 'tx', transaction: signed.hash, binary: false });
+    if (txq && txq.validated && txq.meta?.TransactionResult === 'tesSUCCESS') {
+      grants.set(account, now);
+      await client.disconnect();
+      return res.json({ ok: true, hash: txq.hash || signed.hash, message: 'CFC sent successfully!' });
+    }
+  } catch (_) { /* ignore and fall through to error */ }
+
+  await client.disconnect();
+  console.error('submit error:', err);
+  return res.status(500).json({ ok: false, error: String(err?.data || err?.message || err) });
+}
 
 await client.disconnect();
 
 if (result.result?.meta?.TransactionResult === 'tesSUCCESS') {
   grants.set(account, now);
-  return res.json({ 
-    ok: true, 
-    hash: result.result?.tx_json?.hash,
-    message: 'CFC sent successfully!' // added message field
-  });
+  return res.json({ ok: true, hash: result.result?.tx_json?.hash, message: 'CFC sent successfully!' });
 } else {
   return res.status(500).json({
     ok: false,
     error: result.result?.meta?.TransactionResult || 'Submit failed'
   });
 }
+
 
 } catch (e) {
 console.error('faucet error:', e);
