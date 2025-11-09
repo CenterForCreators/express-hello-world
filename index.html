@@ -289,12 +289,13 @@
       }
     }
 
-    function strToHex(str){
-      return Array.from(new TextEncoder().encode(str)).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase()
-    }
+   function strToHex(str) {
+  return Array.from(new TextEncoder().encode(str))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
 
-
-<script>
 async function claimFaucet() {
   const msgEl = document.getElementById('claimMsg') || document.getElementById('claimStatus');
   const spin = document.getElementById('claimSpin');
@@ -320,12 +321,14 @@ async function claimFaucet() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account: account, captcha_ok: true })
     });
+
     const data = await res.json().catch(() => ({}));
 
     if (data && data.ok) {
       if (msgEl) msgEl.textContent = '✅ Claimed 10 CFC successfully!';
       try { await connectXRPLAndLoadBalances(account); } catch (_) {}
       try { if (typeof regenCaptcha === 'function') regenCaptcha(); } catch (_) {}
+      try { if (typeof newCaptcha === 'function') newCaptcha(); } catch (_) {}  // moved here
     } else {
       if (msgEl) {
         const err = (data && (data.error || data.message)) || '';
@@ -340,10 +343,6 @@ async function claimFaucet() {
     if (spin) spin.style.display = 'none';
   }
 }
-</script>
-
-
-  try{ if(typeof newCaptcha==='function') newCaptcha(); }catch(e){}
 
       const msg = document.getElementById('claimMsg')
       if (!connectedAccount || connectedAccount === 'undefined' || connectedAccount === null) { msg.textContent = 'Connect your wallet first (top right).'; return }
