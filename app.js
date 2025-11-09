@@ -175,9 +175,8 @@ Destination: account,
 Amount: { currency, issuer, value }
 };
 
-// ✅ Restore stable ledger window and add some fee headroom 
-const filled = await client.autofill(tx, { max_ledger_offset: 60, fee_mult_max: 2 });
-
+// ✅ Increased ledger window to avoid XRPL latency issues
+const filled = await client.autofill(tx, { max_ledger_offset: 60 });
 
 const signed = wallet.sign(filled);
 const result = await client.submitAndWait(signed.tx_blob);
