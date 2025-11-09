@@ -548,51 +548,6 @@ async function connect(){
   }catch(e){ var m=document.getElementById('claimMsg'); if(m) m.textContent='Connection cancelled.'; }
 }
 
-async 
-async function claimFaucet(){
-  try{ if(typeof newCaptcha==='function') newCaptcha(); }catch(e){}
-  const msg = document.getElementById('faucetStatus') || document.getElementById('claimMsg');
-  const btn = document.getElementById('claimBtn');
-  const aEl = document.getElementById('capA');
-  const bEl = document.getElementById('capB');
-  const ans = document.getElementById('capAns');
-  if(!msg) return;
-  if(!window.connectedAccount){
-    msg.textContent = '❌ Connect your wallet first.';
-    return;
-  }
-  // Validate captcha
-  const a = aEl ? parseInt(aEl.textContent,10) : NaN;
-  const b = bEl ? parseInt(bEl.textContent,10) : NaN;
-  const val = ans ? parseInt(ans.value,10) : NaN;
-  if(isNaN(a) || isNaN(b) || isNaN(val) || (a+b)!==val){
-    msg.textContent = '❌ Incorrect captcha answer.';
-    return;
-  }
-  msg.textContent = 'Claiming...';
-  btn && (btn.disabled = true);
-  try{
-    const endpoint = (window.CONFIG && window.CONFIG.FAUCET_ENDPOINT) ? window.CONFIG.FAUCET_ENDPOINT : 'https://cfc-faucet.onrender.com/api/faucet';
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: window.connectedAccount, captcha_ok: true })
-    });
-    const data = await res.json().catch(()=>({}));
-    if(data && data.ok){
-      msg.textContent = '✅ Claimed 10 CFC successfully!';
-      if(typeof fetchBalances==='function'){ try{ await fetchBalances(window.connectedAccount); }catch(e){} }
-      if(typeof newCaptcha==='function'){ try{ newCaptcha(); ans && (ans.value=''); }catch(e){} }
-    }else{
-      msg.textContent = '❌ ' + (data && (data.error||data.message) || 'Claim failed');
-    }
-  }catch(err){
-    console.error('Claim error:', err);
-    msg.textContent = 'Server error. Try again.';
-  }finally{
-    btn && (btn.disabled = false);
-  }
-}
 
     const signin = await xumm.payload.createAndSubscribe({ txjson: { TransactionType: 'SignIn' } }, () => {});
     if (signin?.created?.next) window.open(signin.created.next.always, '_blank');
