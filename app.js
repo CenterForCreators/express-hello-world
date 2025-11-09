@@ -184,14 +184,19 @@ const result = await client.submitAndWait(signed.tx_blob);
 await client.disconnect();
 
 if (result.result?.meta?.TransactionResult === 'tesSUCCESS') {
-grants.set(account, now);
-return res.json({ ok: true, hash: result.result?.tx_json?.hash });
+  grants.set(account, now);
+  return res.json({ 
+    ok: true, 
+    hash: result.result?.tx_json?.hash,
+    message: 'CFC sent successfully!' // added message field
+  });
 } else {
-return res.status(500).json({
-ok: false,
-error: result.result?.meta?.TransactionResult || 'Submit failed'
-});
+  return res.status(500).json({
+    ok: false,
+    error: result.result?.meta?.TransactionResult || 'Submit failed'
+  });
 }
+
 } catch (e) {
 console.error('faucet error:', e);
 return res.status(500).json({ ok: false, error: String(e.message || e) });
