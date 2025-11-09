@@ -116,7 +116,8 @@
       <input id="capAns" inputmode="numeric" maxlength="2" placeholder="?" style="width:70px" type="text"/>
 <button class="btn small" onclick="if(window.regenCaptcha)window.regenCaptcha()" type="button">↻</button>
 </div>
-<button class="btn" id="claimBtn" onclick="try{ if(checkCaptcha()){ if(window.claimFaucet){claimFaucet()} else if(window.claim){claim()} } else { var m=document.getElementById('claimMsg'); if(m) m.textContent='Please solve the math question.'; } }catch(e){}">Claim CFC</button>
+<button class="btn" id="claimBtn">Claim CFC</button>
+
 <div class="spinner" id="claimSpin" style="display:none"></div>
 <div class="status" id="claimStatus"></div>
 </div>
@@ -1786,12 +1787,12 @@ function cleanTexts(){
 
   btn.addEventListener('click', async function (ev) {
     ev.preventDefault();
-    var statusEl = document.getElementById('claimStatus')
+    var status = document.getElementById('claimStatus')
         || document.querySelector('#faucet .status');
-    var spinEl = document.getElementById('claimSpin');
+    var spin = document.getElementById('claimSpin');
 
-    if (statusEl){ statusEl.className='status warn'; statusEl.textContent='Sending…'; }
-    if (spinEl){ spinEl.style.display='inline-block'; }
+    if (status){ status.className='status warn'; status.textContent='Sending…'; }
+    if (spin){ spin.style.display='inline-block'; }
 
     try {
       const url = (window.CONFIG && (CONFIG.FAUCET_ENDPOINT || CONFIG.faucetEndpoint))
@@ -1803,15 +1804,15 @@ function cleanTexts(){
       });
       const j = await r.json();
 
-      if (statusEl){
+      if (status){
         if (j && j.ok){
           var amt = (window.CONFIG && (CONFIG.faucetAmount || CONFIG.FAUCET_DAILY_AMOUNT)) || 10;
           var code = (window.CONFIG && (CONFIG.currencyCode || CONFIG.CFC_CODE)) || 'CFC';
-          statusEl.className='status ok';
-          statusEl.textContent='✅ ' + amt + ' ' + code + ' sent!';
+          status.className='status ok';
+          status.textContent='✅ ' + amt + ' ' + code + ' sent!';
         } else {
-          statusEl.className='status err';
-          statusEl.textContent='Request failed';
+          status.className='status err';
+          status.textContent='Request failed';
           setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
         }
       }
