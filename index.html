@@ -198,18 +198,6 @@
   </div> <!-- ✅ closes the grid -->
 </section>
 
-<section class="card" id="join">
-<h2>Join the list</h2>
-<p class="muted">Get updates from CenterForCreators.com</p>
-<div style="max-width:420px">
-<form class="row" id="joinForm" onsubmit="return false;">
-<input id="joinEmail" placeholder="you@example.com" required="" type="email"/>
-<button class="btn" id="joinBtn" type="submit">Join</button>
-</form>
-<div class="status" id="joinStatus"></div>
-</div>
-</section>
-
 <section id="view-purchases" style="display:none">
 
 <div class="grid" id="purchasesGrid"></div>
@@ -865,6 +853,17 @@ try {
       });
     })();
   </script>
+<section class="card" id="join">
+<h2>Join the list</h2>
+<p class="muted">Get updates from CenterForCreators.com</p>
+<div style="max-width:420px">
+<form class="row" id="joinForm" onsubmit="return false;">
+<input id="joinEmail" placeholder="you@example.com" required="" type="email"/>
+<button class="btn" id="joinBtn" type="submit">Join</button>
+</form>
+<div class="status" id="joinStatus"></div>
+</div>
+</section>
 <script>
 (function(){
   function gid(id){ return document.getElementById(id); }
