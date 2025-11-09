@@ -196,20 +196,22 @@
 </footer>
 </div>
 <script>
-      networkWss: 'wss://xrplcluster.com',
-      CFC_ISSUER: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
-      CFC_CODE: 'CFC',
-      XUMM_API_KEY: 'eebd4c17-c3ef-435b-b891-89afb99e259e',
-      EMAIL_FALLBACK_URL: 'https://centerforcreators.com/contact',
-      RECEIVER_XRP: 'rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd',
-      FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet', // set to your server URL (…/faucet) after deploy
-      FAUCET_DAILY_AMOUNT: '10',
-      ITEMS: [
-        { id: 'svc1', name: 'Private Strategy Session', priceCFC: '500', priceXRP: '50' },
-        { id: 'wrk1', name: 'Blockchain Made Simple — Workshop', priceCFC: '350', priceXRP: '35' },
-        { id: 'book1', name: 'The Power to Rise — Digital Collectible', priceCFC: '199', priceXRP: '20' }
-      ]
-    };
+      const CONFIG = {
+  networkWss: 'wss://xrplcluster.com',
+  CFC_ISSUER: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
+  CFC_CODE: 'CFC',
+  RLUSD_ISSUER: 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De',
+  XUMM_API_KEY: 'eebd4c17-c3ef-435b-b891-89afb99e259e',
+  EMAIL_FALLBACK_URL: 'https://centerforcreators.com/contact',
+  RECEIVER_XRP: 'rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd',
+  FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
+  FAUCET_DAILY_AMOUNT: '10',
+  ITEMS: [
+    { id: 'svc1', name: 'Private Strategy Session', priceCFC: '500', priceXRP: '50', priceRLUSD: '50' },
+    { id: 'wrk1', name: 'Blockchain Made Simple — Workshop', priceCFC: '350', priceXRP: '35', priceRLUSD: '35' },
+    { id: 'book1', name: 'The Power to Rise — Digital Collectible', priceCFC: '199', priceXRP: '20', priceRLUSD: '20' }
+  ]
+};
 
     const client = new xrpl.Client(CONFIG.networkWss)
     const xumm = new Xumm(CONFIG.XUMM_API_KEY)
@@ -400,27 +402,30 @@ catch(e){}
       alert(resolved.signed ? 'Thanks! We received your order. We’ll deliver your NFT shortly.' : 'Payment was cancelled.')
     }
 
-    async function buyWithCFC(item){
-      if (!connectedAccount){ alert('Connect your wallet first.'); return }
-      await ensureConnected()
-      const lines = await client.request({ command: 'account_lines', account: connectedAccount })
-      const cfcLine = lines.result.lines.find(l => l.account === CONFIG.CFC_ISSUER && l.currency === CONFIG.CFC_CODE)
-      if (!cfcLine){ alert('You need a CFC trustline before paying in CFC. Click "Add Trustline" above.'); return }
-      const bal = parseFloat(cfcLine.balance||'0')
-      if (bal < parseFloat(item.priceCFC)){ alert('Insufficient CFC balance.'); return }
+    async function buyWithRLUSD(item){
+  if (!connectedAccount){ alert('Connect your wallet first.'); return }
+  await ensureConnected()
 
-      const tx = {
-        TransactionType: 'Payment',
-        Account: connectedAccount,
-        Destination: CONFIG.RECEIVER_XRP,
-        Amount: { currency: CONFIG.CFC_CODE, issuer: CONFIG.CFC_ISSUER, value: item.priceCFC },
-        Memos: [{ Memo: { MemoType: strToHex('CFC-PURCHASE'), MemoData: strToHex(`${item.id}|CFC|${Date.now()}`) } }]
-      }
-      const payload = await xumm.payload.createAndSubscribe({ txjson: tx }, () => {})
-      if (payload?.created?.next) window.open(payload.created.next.always, '_blank')
-      const resolved = await payload.resolved
-      alert(resolved.signed ? 'Thanks! We received your CFC payment. We’ll deliver your NFT shortly.' : 'Payment was cancelled.')
-    }
+  const lines = await client.request({ command: 'account_lines', account: connectedAccount })
+  const rlUsdLine = lines.result.lines.find(l => l.account === CONFIG.RLUSD_ISSUER && l.currency === "RLUSD")
+  if (!rlUsdLine){ alert('You need an RLUSD trustline before paying.'); return }
+
+  const bal = parseFloat(rlUsdLine.balance || '0')
+  if (bal < parseFloat(item.priceRLUSD)){ alert('Insufficient RLUSD balance.'); return }
+
+  const tx = {
+    TransactionType: 'Payment',
+    Account: connectedAccount,
+    Destination: CONFIG.RECEIVER_XRP,
+    Amount: { currency: "RLUSD", issuer: CONFIG.RLUSD_ISSUER, value: item.priceRLUSD },
+    Memos: [{ Memo: { MemoType: strToHex('RLUSD-PURCHASE'), MemoData: strToHex(`${item.id}|RLUSD|${Date.now()}`) } }]
+  }
+
+  const payload = await xumm.payload.createAndSubscribe({ txjson: tx }, () => {})
+  if (payload?.created?.next) window.open(payload.created.next.always, '_blank')
+  const resolved = await payload.resolved
+  alert(resolved.signed ? 'Thanks! We received your RLUSD payment 🎉' : 'Payment cancelled.')
+}
 
     function switchView(which){
       document.getElementById('view-market').style.display = which==='market' ? 'block' : 'none'
@@ -477,16 +482,17 @@ catch(e){}
       box.textContent='Opening contact page…'
     })
 
-    document.getElementById('connectBtn').addEventListener('click', connectXaman)
-    document.getElementById('buy1cfc').addEventListener('click', () => buyWithCFC(CONFIG.ITEMS[0]))
-    document.getElementById('buy2cfc').addEventListener('click', () => buyWithCFC(CONFIG.ITEMS[1]))
-    document.getElementById('buy3cfc').addEventListener('click', () => buyWithCFC(CONFIG.ITEMS[2]))
-    document.getElementById('buy1xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[0]))
-    document.getElementById('buy2xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[1]))
-    document.getElementById('buy3xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[2]))
-    document.getElementById('claimBtn').addEventListener('click', claimFaucet)
+   document.getElementById('connectBtn').addEventListener('click', connectXaman)
+document.getElementById('buy1rlusd').addEventListener('click', () => buyWithRLUSD(CONFIG.ITEMS[0]))
+document.getElementById('buy2rlusd').addEventListener('click', () => buyWithRLUSD(CONFIG.ITEMS[1]))
+document.getElementById('buy3rlusd').addEventListener('click', () => buyWithRLUSD(CONFIG.ITEMS[2]))
+document.getElementById('buy1xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[0]))
+document.getElementById('buy2xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[1]))
+document.getElementById('buy3xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[2]))
+document.getElementById('claimBtn').addEventListener('click', claimFaucet)
 
-    switchView('market')
+switchView('market')
+
   </script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
