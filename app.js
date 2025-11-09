@@ -176,7 +176,7 @@ Amount: { currency, issuer, value }
 };
 
 // ✅ Increased ledger window to avoid XRPL latency issues
-const filled = await client.autofill(tx, { max_ledger_offset: 120 });
+const filled = await client.autofill(tx, { max_ledger_offset: 40 });
 
 const signed = wallet.sign(filled);
 const result = await client.submitAndWait(signed.tx_blob);
