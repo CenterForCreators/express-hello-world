@@ -344,28 +344,8 @@ async function claimFaucet() {
   }
 }
 
-      const msg = document.getElementById('claimMsg')
-      if (!connectedAccount || connectedAccount === 'undefined' || connectedAccount === null) { msg.textContent = 'Connect your wallet first (top right).'; return }
-      msg.textContent = 'Verifying…'
-      try {
-        const signin = await xumm.payload.createAndSubscribe({ txjson: { TransactionType: 'SignIn' } }, () => {})
-        if (signin?.created?.next) window.open(signin.created.next.always, '_blank')
-        const res = await signin.resolved
-        if (!res?.signed || !res?.response?.account) { msg.textContent = 'Claim cancelled.'; return }
-        const verifiedAddress = res.response.account
-        if (verifiedAddress !== connectedAccount) { msg.textContent = 'Please use the same wallet you connected.'; return }
-        const r = await fetch(CONFIG.FAUCET_ENDPOINT, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ payload_uuid: signin.created.uuid, address: connectedAccount })
-        })
-        const data = await r.json().catch(() => ({}))
-        msg.textContent = r.ok ? (data?.message || 'Sent! Check your wallet in a moment.') : (data?.error || 'Claim failed.')
-      } catch(e) {
-        msg.textContent = 'Network error.'
-      }
-    }
+async function buyWithXRP(item){
 
-    async function buyWithXRP(item){
       const amountDrops = Math.round(Number(item.priceXRP) * 1_000_000).toString()
       const tx = {
         TransactionType: 'Payment',
