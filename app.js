@@ -69,7 +69,7 @@ txjson: {
 TransactionType: "Payment",
 Destination: PAY_DESTINATION,
 Amount: {
-currency: "RLUSD", // changed from CFC to RLUSD
+currency: "524C555344000000000000000000000000000000", // hex for RLUSD
 issuer: PAY_DESTINATION,
 value: "10"
 }
