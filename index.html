@@ -295,89 +295,54 @@
 
     async 
 
-async function claimFaucet(){
+<script>
+async function claimFaucet() {
   const msgEl = document.getElementById('claimMsg') || document.getElementById('claimStatus');
   const spin = document.getElementById('claimSpin');
-  try{
-    if(typeof checkCaptcha==='function' && !checkCaptcha()){
-      if(msgEl) msgEl.textContent = 'Please solve the math question.';
+  try {
+    if (typeof checkCaptcha === 'function' && !checkCaptcha()) {
+      if (msgEl) msgEl.textContent = 'Please solve the math question.';
       return;
     }
-    if(!account){
-      if(msgEl) msgEl.textContent = 'Connect your wallet first (top-right).';
+    if (!account) {
+      if (msgEl) msgEl.textContent = 'Connect your wallet first (top-right).';
       return;
     }
-    if(msgEl) msgEl.textContent = 'Claiming...';
-    if(spin) spin.style.display = 'inline-block';
-    const ep = (window.CONFIG && (CONFIG.FAUCET_ENDPOINT || CONFIG.FAUCET_URL)) ? (CONFIG.FAUCET_ENDPOINT || CONFIG.FAUCET_URL) : 'https://cfc-faucet.onrender.com/api/faucet';
+
+    if (msgEl) msgEl.textContent = 'Claiming...';
+    if (spin) spin.style.display = 'inline-block';
+
+    const ep = (window.CONFIG && (CONFIG.FAUCET_ENDPOINT || CONFIG.FAUCET_URL))
+      ? (CONFIG.FAUCET_ENDPOINT || CONFIG.FAUCET_URL)
+      : 'https://cfc-faucet.onrender.com/api/faucet';
+
     const res = await fetch(ep, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account: account, captcha_ok: true })
     });
-    const data = await res.json().catch(()=>({}));
-    if(data && data.ok){
-      if(msgEl) msgEl.textContent = '✅ Claimed 10 CFC successfully!';
-      try{ await connectXRPLAndLoadBalances(account); }catch(e){}
-      try{ if(typeof regenCaptcha==='function') regenCaptcha(); }catch(e){};
-    }else{
-      if(msgEl){ 
-      const __err = (data && (data.error||data.message)) || '';
-      if (/invalid account/i.test(__err)) { msgEl.textContent = ''; }
-      else { msgEl.textContent = '❌ ' + (__err || 'Claim failed'); }
+    const data = await res.json().catch(() => ({}));
+
+    if (data && data.ok) {
+      if (msgEl) msgEl.textContent = '✅ Claimed 10 CFC successfully!';
+      try { await connectXRPLAndLoadBalances(account); } catch (_) {}
+      try { if (typeof regenCaptcha === 'function') regenCaptcha(); } catch (_) {}
+    } else {
+      if (msgEl) {
+        const err = (data && (data.error || data.message)) || '';
+        if (/invalid account/i.test(err)) msgEl.textContent = '';
+        else msgEl.textContent = '❌ ' + (err || 'Claim failed');
+      }
     }
-    }
-  }catch(e){
+  } catch (e) {
     console.error('claim error', e);
-    if(msgEl) msgEl.textContent = 'Server error. Try again.';
-  }finally{
-    if(spin) spin.style.display = 'none';
+    if (msgEl) msgEl.textContent = 'Server error. Try again.';
+  } finally {
+    if (spin) spin.style.display = 'none';
   }
 }
-catch(e){}
-  const msg = document.getElementById('faucetStatus') || document.getElementById('claimMsg');
-  const btn = document.getElementById('claimBtn');
-  const aEl = document.getElementById('capA');
-  const bEl = document.getElementById('capB');
-  const ans = document.getElementById('capAns');
-  if(!msg) return;
-  if(!window.connectedAccount){
-    msg.textContent = '❌ Connect your wallet first.';
-    return;
-  }
-  // Validate captcha
-  const a = aEl ? parseInt(aEl.textContent,10) : NaN;
-  const b = bEl ? parseInt(bEl.textContent,10) : NaN;
-  const val = ans ? parseInt(ans.value,10) : NaN;
-  if(isNaN(a) || isNaN(b) || isNaN(val) || (a+b)!==val){
-    msg.textContent = '❌ Incorrect captcha answer.';
-    return;
-  }
-  msg.textContent = 'Claiming...';
-  btn && (btn.disabled = true);
-  try{
-    const endpoint = (window.CONFIG && window.CONFIG.FAUCET_ENDPOINT) ? window.CONFIG.FAUCET_ENDPOINT : 'https://cfc-faucet.onrender.com/api/faucet';
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: window.connectedAccount, captcha_ok: true })
-    });
-    const data = await res.json().catch(()=>({}));
-    if(data && data.ok){
-      msg.textContent = '✅ Claimed 10 CFC successfully!';
-      if(typeof fetchBalances==='function'){ try{ await fetchBalances(window.connectedAccount); }catch(e){} }
-      if(typeof newCaptcha==='function'){ try{ newCaptcha(); ans && (ans.value=''); }catch(e){} }
-    }else{
-      msg.textContent = '❌ ' + (data && (data.error||data.message) || 'Claim failed');
-    }
-  }catch(err){
-    console.error('Claim error:', err);
-    msg.textContent = 'Server error. Try again.';
-  }finally{
-    btn && (btn.disabled = false);
-  }
-}
-catch(e){}
+</script>
+
 
   try{ if(typeof newCaptcha==='function') newCaptcha(); }catch(e){}
 
