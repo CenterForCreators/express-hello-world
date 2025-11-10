@@ -67,12 +67,12 @@
     function show(el){ el.style.display='block'; }
     function hide(el){ el.style.display='none'; }
     function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
-  </script>
-<!-- Render-hosted SDKs -->
-<script onload="try{window.xumm=new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');}catch(e){console.error(e);}" src="https://cfc-faucet.onrender.com/sdk/xumm.min.js"></script>
+  </script><!-- Render-hosted SDKs -->
 <script src="https://cfc-faucet.onrender.com/sdk/xrpl-latest-min.js"></script>
+<script src="https://cfc-faucet.onrender.com/sdk/xumm.min.js" onload="try{window.xumm=new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');}catch(e){console.error(e);}"></script>
 <style>/* CFC-AUTO-STYLE */
   .server-waiting-url{ display:none !important; }
+
 </style>
 </head>
 <body>
@@ -878,40 +878,60 @@ try {
     return r.json();
   }
 
-  if(claimBtn && !claimBtn.__wired){
-    claimBtn.__wired = true;
-    claimBtn.addEventListener('click', async function(){
-      if(capQ && capA){
-        const ans = parseInt(capA.value||'NaN',10);
-        if(isNaN(ans) || ans !== (a+b)){
-          if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
-          return;
+ if (claimBtn && !claimBtn.__wired) {
+  claimBtn.__wired = true;
+  claimBtn.addEventListener('click', async function() {
+    if (capQ && capA) {
+      const ans = parseInt(capA.value || 'NaN', 10);
+      if (isNaN(ans) || ans !== (a + b)) {
+        if (claimStatus) { 
+          claimStatus.className = 'status err'; 
+          claimStatus.textContent = '❌ Please solve the math first'; 
         }
-      }
-      if(!account){
-        alert('Connect Xaman first so we know your account.');
         return;
       }
-      if(claimStatus){ claimStatus.className='status warn'; claimStatus.textContent='Sending…'; }
-      if(claimSpin){ claimSpin.style.display='inline-block'; }
-      try{
-        const j = await postJson(CONFIG.FAUCET_ENDPOINT, { captcha_ok:true, account });
-        if(j && j.ok){
-          if(claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ 10 CFC sent (pending ledger)…'; }
-          setTimeout(()=>connectXRPLAndLoadBalances(account), 8000);
-        }else{
-          if (claimStatus){ 
-  claimStatus.className='status err'; 
-  claimStatus.textContent=''; 
-}
+    }
+
+    if (!account) {
+      alert('Connect Xaman first so we know your account.');
+      return;
+    }
+
+    if (claimStatus) { 
+      claimStatus.className = 'status warn'; 
+      claimStatus.textContent = 'Sending…'; 
+    }
+    if (claimSpin) { 
+      claimSpin.style.display = 'inline-block'; 
+    }
+
+    try {
+      const j = await postJson(CONFIG.FAUCET_ENDPOINT, { captcha_ok: true, account, solved: true });
+      if (j && j.ok) {
+        if (claimStatus) { 
+          claimStatus.className = 'status ok'; 
+          claimStatus.textContent = '✅ 10 CFC sent (pending ledger)…'; 
         }
-      }catch(e){
-        if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Network error'; }
-      }finally{
-        if(claimSpin){ claimSpin.style.display='none'; }
+        setTimeout(() => connectXRPLAndLoadBalances(account), 8000);
+      } else {
+        if (claimStatus) { 
+          claimStatus.className = 'status err'; 
+          claimStatus.textContent = j.error || 'Error claiming'; 
+        }
       }
-    });
-  }
+    } catch (e) {
+      if (claimStatus) { 
+        claimStatus.className = 'status err'; 
+        claimStatus.textContent = 'Network error'; 
+      }
+    } finally {
+      if (claimSpin) { 
+        claimSpin.style.display = 'none'; 
+      }
+    }
+  });
+}
+ 
 
   const joinEmail = gid('joinEmail') || gid('emailInput');
   const joinBtn = gid('joinBtn') || gid('emailSubmit');
