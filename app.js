@@ -1,3 +1,4 @@
+
 // ===== app.js (CFC backend: Xumm pay + Join + Faucet) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
