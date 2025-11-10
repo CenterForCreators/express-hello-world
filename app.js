@@ -182,7 +182,7 @@ app.post('/api/faucet', async (req, res) => {
     };
 
     // Wider window to avoid late-ledger temREDUNDANT
-    const filled = await client.autofill(tx, { max_ledger_offset: 180});
+    const filled = await client.autofill(tx, { max_ledger_offset: 600});
 
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
