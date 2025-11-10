@@ -7,15 +7,20 @@ const app = express();
 
 /* ---------- CORS (Allow GitHub + Unstoppable + IPFS + main site) ---------- */
 app.use(cors({
-  origin: [
-    "https://centerforcreators.com",
-    "https://centerforcreators.github.io",
-    "https://centerforcreators.nft",
-    "https://cf-ipfs.com",
-    "https://dweb.link"
-  ],
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
+ origin: [
+  "https://centerforcreators.com",
+  "https://centerforcreators.nft",
+  "https://centerforcreators.github.io",
+  "https://centerforcreators.github.io/express-hello-world/",
+  "https://cfc-faucet.onrender.com",
+  "https://cf-ipfs.com",
+  "https://gateway.pinata.cloud",
+  "https://ipfs.io",
+  "https://cloudflare-ipfs.com",
+  "https://dweb.link"
+],
+methods: ["GET", "POST"],
+allowedHeaders: ["Content-Type"]
 }));
 
 app.use(express.json());
