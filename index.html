@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-<!-- BUILD TAG: CFC-OK -->
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <!-- Xumm & XRPL SDKs -->
+  <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
+
+  <!-- Initialize XRPL Client -->
+  <script>
+    const client = new xrpl.Client('wss://s1.ripple.com');
+  </script>
+
+  <!-- BUILD TAG: CFC-OK -->
+  <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Center for Creators — CFC on XRPL</title>
 <meta content="Center for Creators NFT site — Faucet + Marketplace powered by CFC on XRPL." name="description"/>
 <!-- Render-hosted SDKs (so gateways don't block) -->
 <style>
     .divider{height:1px;background:var(--accent);opacity:0.6;margin:10px 0 14px 0;border-radius:999px}
+
 
     :root { --bg:#0b1220; --card:#121a2b; --text:#f6f8ff; --muted:#9fb0d1; --accent:#7db8ff; --ok:#1fcf7c; --warn:#ffcc00; --err:#ff6b6b;}
     *{box-sizing:border-box}
