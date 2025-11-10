@@ -68,7 +68,7 @@
     function hide(el){ el.style.display='none'; }
     function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
   </script><!-- Render-hosted SDKs -->
-<script src="https://cfc-faucet.onrender.com/sdk/xrpl-latest-min.js"></script>
+<script src="https://unpkg.com/xrpl@3.2.0/dist/npm/xrpl-latest-min.js"></script>
 <script src="https://cfc-faucet.onrender.com/sdk/xumm.min.js" onload="try{window.xumm=new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');}catch(e){console.error(e);}"></script>
 <style>/* CFC-AUTO-STYLE */
   .server-waiting-url{ display:none !important; }
