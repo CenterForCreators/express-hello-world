@@ -232,10 +232,10 @@
     const xumm = new Xumm(CONFIG.XUMM_API_KEY)
     let connectedAccount = null
 
-    const $ = sel => document.querySelector(sel)
-    function setStatus(text){ $('#status').textContent = text }
+        function setStatus(text){ $('#status').textContent = text }
     function setAddr(text){ $('#address').textContent = text }
-    function showError(msg){ const b=document.getElementById('errorBox'); b.textContent=msg; b.style.display='block' }
+    function showError(msg){ const b=document.getElementById('errorBox'); b.textContent=
+msg; b.style.display='block' }
     function hideError(){ const b=document.getElementById('errorBox'); b.style.display='none'; b.textContent='' }
 
     async function ensureConnected(){ if (!client.isConnected()) await client.connect() }
@@ -1880,7 +1880,7 @@ try {
     setTimeout(()=>{ statusEl.textContent=''; statusEl.className='status'; }, 5000);
   }
 } finally {
-  if (spinEl){ spinEl.style.display='none'; }
+  if (spin){ spin.style.display='none'; }
 }
 </script>
 
@@ -1999,7 +1999,8 @@ try {
       if (data.ok) {
         emailMsg.textContent = 'Thanks for joining the list!';
         emailMsg.style.color = '#1fcf7c';
-        emailInput.value = '';
+        emailInput.value = '';switchView('market')
+
       } else {
         emailMsg.textContent = 'Error: ' + (data.error || 'Please try again');
         emailMsg.style.color = '#ff6b6b';
