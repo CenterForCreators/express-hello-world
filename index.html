@@ -110,11 +110,102 @@
 </div>
 <div class="row" id="cfc-captcha-row" style="margin-top:12px">
 <div class="row" style="margin-top:10px">
+
 <div id="cfc-captcha" style="margin:10px 0;display:flex;gap:8px;align-items:center;">
 <span class="tag" id="capA">0</span> + <span class="tag" id="capB">0</span> =
       <input id="capAns" inputmode="numeric" maxlength="2" placeholder="?" style="width:70px" type="text"/>
 <button class="btn small" onclick="if(window.regenCaptcha)window.regenCaptcha()" type="button">↻</button>
+<script>
+  (function () {
+    let A = 0, B = 0;
+    function setNumbers(){
+      A = Math.floor(Math.random()*10);
+      B = Math.floor(Math.random()*10);
+      const a = document.getElementById('capA');
+      const b = document.getElementById('capB');
+      const ans = document.getElementById('capAns');
+      if (a) a.textContent = String(A);
+      if (b) b.textContent = String(B);
+      if (ans) ans.value = '';
+    }
+    window.regenCaptcha = setNumbers;
+    window.checkCaptcha = function(){
+      const ans = document.getElementById('capAns');
+      const val = parseInt((ans && ans.value) || 'NaN', 10);
+      return !Number.isNaN(val) && val === (A + B);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setNumbers);
+    } else {
+      setNumbers();
+    }
+  })();
+</script>
+
+
 </div>
+<script>
+  const claimBtn = document.getElementById('claimBtn');
+  const claimStatus = document.getElementById('claimStatus');
+  const claimSpin = document.getElementById('claimSpin');
+
+  if (claimBtn && !claimBtn.__wired) {
+    claimBtn.__wired = true;
+    claimBtn.addEventListener('click', async function () {
+      // ✅ Check CAPTCHA
+      if (!window.checkCaptcha || !window.checkCaptcha()) {
+        if (claimStatus) {
+          claimStatus.className = 'status err';
+          claimStatus.textContent = '❌ Please solve the math first';
+        }
+        return;
+      }
+
+      // ✅ Check Xaman connection
+      if (!window.account) {
+        alert('Connect Xaman first so we know your account.');
+        return;
+      }
+
+      // ✅ Show sending
+      if (claimStatus) {
+        claimStatus.className = 'status warn';
+        claimStatus.textContent = 'Sending…';
+      }
+      if (claimSpin) claimSpin.style.display = 'inline-block';
+
+      try {
+        const r = await fetch(window.CONFIG.FAUCET_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ captcha_ok: true, account: window.account })
+        });
+        const j = await r.json();
+
+        if (j && j.ok) {
+          if (claimStatus) {
+            claimStatus.className = 'status ok';
+            claimStatus.textContent = '✅ 10 CFC sent (pending ledger)…';
+          }
+          setTimeout(() => connectXRPLAndLoadBalances(window.account), 8000);
+        } else {
+          if (claimStatus) {
+            claimStatus.className = 'status err';
+            claimStatus.textContent = j.error || 'Error claiming';
+          }
+        }
+      } catch (e) {
+        if (claimStatus) {
+          claimStatus.className = 'status err';
+          claimStatus.textContent = 'Network error';
+        }
+      } finally {
+        if (claimSpin) claimSpin.style.display = 'none';
+      }
+    });
+  }
+</script>
+
 <button class="btn" id="claimBtn">Claim CFC</button>
 
 <div class="spinner" id="claimSpin" style="display:none"></div>
