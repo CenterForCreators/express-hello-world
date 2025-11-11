@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- XRPL + XUMM SDKs (correct) -->
-<script src="https://cfc-faucet.onrender.com/sdk/xrpl-latest-min.js"></script>
-<script src="https://cfc-faucet.onrender.com/sdk/xumm.min.js"
-  onload="try { window.xumm = new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e'); } catch(e) { console.error(e); }">
-</script>
-
+  <!-- Xumm & XRPL SDKs -->
+  <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
 
   <!-- Initialize XRPL Client -->
   <script>
@@ -77,6 +74,23 @@
 <style>/* CFC-AUTO-STYLE */
   .server-waiting-url{ display:none !important; }
 </style>
+<!-- ✅ XUMM iPhone Deep-Link Fix -->
+<script>
+function openXummLink(payloadUUID) {
+  try {
+    // Try opening the XUMM app directly (best for iPhone)
+    window.location.href = `xumm://xapp?xrplsign&payload=${payloadUUID}`;
+    // Fallback: open web signer if app doesn’t open within 2 seconds
+    setTimeout(() => {
+      window.location.href = `https://xumm.app/sign/${payloadUUID}`;
+    }, 2000);
+  } catch (e) {
+    console.error("XUMM redirect failed:", e);
+    window.location.href = `https://xumm.app/sign/${payloadUUID}`;
+  }
+}
+</script>
+
 </head>
 <body>
 <div class="wrap">
@@ -107,112 +121,14 @@
 <div class="muted">Claim <strong id="faucetAmount">10</strong> CFC once every 24 hours.</div>
 </div>
 <div class="tag" id="faucetStatus">Server: Waiting for URL</div>
-<script>
-  (function () {
-    let A = 0, B = 0;
-    function setNumbers() {
-      A = Math.floor(Math.random() * 10);
-      B = Math.floor(Math.random() * 10);
-      const a = document.getElementById('capA');
-      const b = document.getElementById('capB');
-      const ans = document.getElementById('capA');
-
-      if (a) a.textContent = String(A);
-      if (b) b.textContent = String(B);
-      if (ans) ans.value = '';
-    }
-
-    window.regenCaptcha = setNumbers;
-
-    window.checkCaptcha = function () {
-      const ans = document.getElementById('capA');
-      const val = parseInt((ans && ans.value) || 'NaN', 10);
-      return !Number.isNaN(val) && val === (A + B);
-    };
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setNumbers);
-    } else {
-      setNumbers();
-    }
-  })();
-</script>
-
-
 </div>
 <div class="row" id="cfc-captcha-row" style="margin-top:12px">
 <div class="row" style="margin-top:10px">
-
-
-
 <div id="cfc-captcha" style="margin:10px 0;display:flex;gap:8px;align-items:center;">
-  <span class="tag" id="capA">0</span> + <span class="tag" id="capB">0</span> =
-  <input id="capAns" inputmode="numeric" maxlength="2" placeholder="?" style="width:70px" type="text"/>
-  <button class="btn small" onclick="if(window.regenCaptcha)window.regenCaptcha()" type="button">↻</button>
+<span class="tag" id="capA">0</span> + <span class="tag" id="capB">0</span> =
+      <input id="capAns" inputmode="numeric" maxlength="2" placeholder="?" style="width:70px" type="text"/>
+<button class="btn small" onclick="if(window.regenCaptcha)window.regenCaptcha()" type="button">↻</button>
 </div>
-
-<script>
-  const claimBtn = document.getElementById('claimBtn');
-  const claimStatus = document.getElementById('claimStatus');
-  const claimSpin = document.getElementById('claimSpin');
-
-  if (claimBtn && !claimBtn.__wired) {
-    claimBtn.__wired = true;
-    claimBtn.addEventListener('click', async function () {
-      // ✅ Check CAPTCHA
-      if (!window.checkCaptcha || !window.checkCaptcha()) {
-        if (claimStatus) {
-          claimStatus.className = 'status err';
-          claimStatus.textContent = '❌ Please solve the math first';
-        }
-        return;
-      }
-
-      // ✅ Check Xaman connection
-      if (!window.account) {
-        alert('Connect Xaman first so we know your account.');
-        return;
-      }
-
-      // ✅ Show sending
-      if (claimStatus) {
-        claimStatus.className = 'status warn';
-        claimStatus.textContent = 'Sending…';
-      }
-      if (claimSpin) claimSpin.style.display = 'inline-block';
-
-      try {
-        const r = await fetch(window.CONFIG.FAUCET_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ captcha_ok: true, account: window.account })
-        });
-        const j = await r.json();
-
-        if (j && j.ok) {
-          if (claimStatus) {
-            claimStatus.className = 'status ok';
-            claimStatus.textContent = '✅ 10 CFC sent (pending ledger)…';
-          }
-          setTimeout(() => connectXRPLAndLoadBalances(window.account), 8000);
-        } else {
-          if (claimStatus) {
-            claimStatus.className = 'status err';
-            claimStatus.textContent = j.error || 'Error claiming';
-          }
-        }
-      } catch (e) {
-        if (claimStatus) {
-          claimStatus.className = 'status err';
-          claimStatus.textContent = 'Network error';
-        }
-      } finally {
-        if (claimSpin) claimSpin.style.display = 'none';
-      }
-    });
-  }
-</script>
-
 <button class="btn" id="claimBtn">Claim CFC</button>
 
 <div class="spinner" id="claimSpin" style="display:none"></div>
@@ -960,77 +876,61 @@ try {
     try{var _b=document.getElementById('connectBtn'); if(_b){ _b.textContent='Connected'; _b.disabled=false; }}catch(e){} connectXRPLAndLoadBalances(account);
   }
 
- 
-  con// === CLAIM BUTTON WITH CAPTCHA CHECK ===
-const claimBtn = gid('claimBtn');
-const claimStatus = gid('claimStatus');
-const claimSpin = gid('claimSpin');
-const capA = gid('capA'), capB = gid('capB'), capAns = gid('capAns');
-let numA = 0, numB = 0;
+  const claimBtn = gid('claimBtn');
+  const claimStatus = gid('claimStatus');
+  const claimSpin = gid('claimSpin');
+  const capQ = gid('capQ'), capA = gid('capA'), capRefresh = gid('capRefresh');
+  let a=0,b=0;
+  function regen(){
+    if(!capQ) return;
+    a = Math.floor(Math.random()*10); b = Math.floor(Math.random()*10);
+    capQ.textContent = 'Solve: ' + a + ' + ' + b + ' = ?';
+    if(capA) capA.value='';
+  }
+  if(capRefresh) capRefresh.addEventListener('click', regen);
+  if(document.readyState!=='loading') regen(); else document.addEventListener('DOMContentLoaded', regen);
 
-function regenCaptcha() {
-  numA = Math.floor(Math.random() * 10);
-  numB = Math.floor(Math.random() * 10);
-  if (capA) capA.textContent = numA;
-  if (capB) capB.textContent = numB;
-  if (capAns) capAns.value = '';
-}
-window.regenCaptcha = regenCaptcha;
+  async function postJson(url, data){
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data||{}) });
+    return r.json();
+  }
 
-// Generate first CAPTCHA when page loads
-if (document.readyState !== 'loading') regenCaptcha();
-else document.addEventListener('DOMContentLoaded', regenCaptcha);
-
-// Claim button logic
-if (claimBtn && !claimBtn.__wired) {
-  claimBtn.__wired = true;
-  claimBtn.addEventListener('click', async function () {
-    if (!account) {
-      alert('Connect Xaman first so we know your account.');
-      return;
-    }
-
-    // ✅ CAPTCHA check
-    const ans = parseInt(capAns?.value || 'NaN', 10);
-    if (isNaN(ans) || ans !== numA + numB) {
-      if (claimStatus) {
-        claimStatus.className = 'status err';
-        claimStatus.textContent = '❌ Please solve the math correctly before claiming.';
-      }
-      return;
-    }
-
-    if (claimStatus) {
-      claimStatus.className = 'status warn';
-      claimStatus.textContent = 'Sending…';
-    }
-    if (claimSpin) claimSpin.style.display = 'inline-block';
-
-    try {
-      const j = await postJson(CONFIG.FAUCET_ENDPOINT, { captcha_ok: true, account });
-      if (j && j.ok) {
-        if (claimStatus) {
-          claimStatus.className = 'status ok';
-          claimStatus.textContent = '✅ 10 CFC sent (pending ledger)…';
-        }
-        setTimeout(() => connectXRPLAndLoadBalances(account), 8000);
-      } else {
-        if (claimStatus) {
-          claimStatus.className = 'status err';
-          claimStatus.textContent = j.error || 'Error claiming';
+  if(claimBtn && !claimBtn.__wired){
+    claimBtn.__wired = true;
+    claimBtn.addEventListener('click', async function(){
+      if(capQ && capA){
+        const ans = parseInt(capA.value||'NaN',10);
+        if(isNaN(ans) || ans !== (a+b)){
+          if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Wrong math answer'; }
+          return;
         }
       }
-    } catch (e) {
-      if (claimStatus) {
-        claimStatus.className = 'status err';
-        claimStatus.textContent = 'Network error';
+      if(!account){
+        alert('Connect Xaman first so we know your account.');
+        return;
       }
-    } finally {
-      if (claimSpin) claimSpin.style.display = 'none';
-    }
-  });
+      if(claimStatus){ claimStatus.className='status warn'; claimStatus.textContent='Sending…'; }
+      if(claimSpin){ claimSpin.style.display='inline-block'; }
+      try{
+        const j = await postJson(CONFIG.FAUCET_ENDPOINT, { captcha_ok:true, account });
+        if(j && j.ok){
+          if(claimStatus){ claimStatus.className='status ok'; claimStatus.textContent='✅ 10 CFC sent (pending ledger)…'; }
+          setTimeout(()=>connectXRPLAndLoadBalances(account), 8000);
+        }else{
+          if (claimStatus){ 
+  claimStatus.className='status err'; 
+  claimStatus.textContent=''; 
 }
-st joinEmail = gid('joinEmail') || gid('emailInput');
+        }
+      }catch(e){
+        if(claimStatus){ claimStatus.className='status err'; claimStatus.textContent='Network error'; }
+      }finally{
+        if(claimSpin){ claimSpin.style.display='none'; }
+      }
+    });
+  }
+
+  const joinEmail = gid('joinEmail') || gid('emailInput');
   const joinBtn = gid('joinBtn') || gid('emailSubmit');
   const joinStatus = gid('joinStatus') || gid('emailMsg');
   if(joinBtn && !joinBtn.__wired){
@@ -2129,7 +2029,7 @@ try {
 
       } else {
         emailMsg.textContent = 'Error: ' + (data.error || 'Please try again');
-        emailMsg.style.color = '#ff6b6b';f
+        emailMsg.style.color = '#ff6b6b';
       }
     } catch (err) {
       console.error(err);
