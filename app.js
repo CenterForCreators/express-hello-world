@@ -18,9 +18,7 @@ app.use(cors({
   "https://gateway.pinata.cloud",
   "https://ipfs.io",
   "https://cloudflare-ipfs.com",
-  "https://dweb.link",
-  "https://bafkreifegc6xxg565zwa4dsnnvgyar3gb3afyrysw7q44kelt2jfb7qpvq.ipfs.dweb.link",
-  "https://bafkreifegc6xxg565zwa4dsnnvgyar3gb3afyrysw7q44kelt2jfb7qpvq.ipfs.cf-ipfs.com"
+  "https://dweb.link"
 ],
 methods: ["GET", "POST"],
 allowedHeaders: ["Content-Type"]
