@@ -1,5 +1,4 @@
-
-// ===== app.js (CFC backend: Xumm pay + Join + Faucet) =====
+// ===== app.js (final faucet backend with working Xumm pay + CORS fix) =====
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
 const xrpl = require("xrpl");
@@ -8,20 +7,15 @@ const app = express();
 
 /* ---------- CORS (Allow GitHub + Unstoppable + IPFS + main site) ---------- */
 app.use(cors({
- origin: [
-  "https://centerforcreators.com",
-  "https://centerforcreators.com/nft-marketplace",
-  "https://centerforcreators.nft",
-  "https://cfc-faucet.onrender.com",
-  "https://cfc-nft-marketplace-frontend.onrender.com",
-  "https://cf-ipfs.com",
-  "https://gateway.pinata.cloud",
-  "https://ipfs.io",
-  "https://cloudflare-ipfs.com",
-  "https://dweb.link"
- ],
- methods: ["GET", "POST"],
- allowedHeaders: ["Content-Type"]
+  origin: [
+    "https://centerforcreators.com",
+    "https://centerforcreators.github.io",
+    "https://centerforcreators.nft",
+    "https://cf-ipfs.com",
+    "https://dweb.link"
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
 }));
 
 app.use(express.json());
@@ -29,7 +23,7 @@ app.use(express.json());
 /* ---------- HEALTH ---------- */
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-/* ---------- SDK serve (proxied) ---------- */
+/* ---------- SDK serve ---------- */
 app.get('/sdk/xumm.min.js', async (_req, res) => {
   const r = await fetch('https://xumm.app/assets/cdn/xumm.min.js');
   res.type('application/javascript').send(await r.text());
@@ -43,7 +37,7 @@ app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
 /* ---------- PAY (live Xumm redirect) ---------- */
 const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
 const XUMM_API_SECRET = process.env.XUMM_API_SECRET || "";
-const PAY_DESTINATION = process.env.PAY_DESTINATION || "rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd"; // current RU address
+const PAY_DESTINATION = process.env.PAY_DESTINATION || "rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd";
 
 async function createXummPayload(payload) {
   const r = await fetch("https://xumm.app/api/v1/platform/payload", {
@@ -63,7 +57,7 @@ async function createXummPayload(payload) {
     console.error("Invalid Xumm API response:", j);
     throw new Error("Xumm API key/secret invalid or response malformed");
   }
-  return j.next.always; // redirect link
+  return j.next.always;
 }
 
 // Pay RLUSD
@@ -74,7 +68,7 @@ app.get("/api/pay-rlusd", async (_req, res) => {
         TransactionType: "Payment",
         Destination: PAY_DESTINATION,
         Amount: {
-          currency: "524C555344000000000000000000000000000000", // "RLUSD" in hex (XRPL)
+          currency: "524C555344000000000000000000000000000000",
           issuer: PAY_DESTINATION,
           value: "10"
         }
@@ -84,6 +78,7 @@ app.get("/api/pay-rlusd", async (_req, res) => {
         return_url: { web: "https://centerforcreators.com/nft-marketplace" }
       }
     });
+
     console.log("Redirecting to:", link);
     return res.redirect(link);
   } catch (e) {
@@ -106,6 +101,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
         return_url: { web: "https://centerforcreators.com/nft-marketplace" }
       }
     });
+
     console.log("Redirecting to:", link);
     return res.redirect(link);
   } catch (e) {
@@ -114,7 +110,7 @@ app.get("/api/pay-xrp", async (_req, res) => {
   }
 });
 
-/* ---------- JOIN (forward email to Google Sheets) ---------- */
+/* ---------- JOIN (Google Sheets) ---------- */
 app.post('/api/join', async (req, res) => {
   const email = (req.body && req.body.email || '').trim();
   if (!email) return res.status(400).json({ ok: false, error: 'Missing email' });
@@ -128,6 +124,7 @@ app.post('/api/join', async (req, res) => {
       method: "POST",
       body: new URLSearchParams({ email })
     });
+
     const j = await r.json();
     console.log('Sheets response:', j);
     return res.json({ ok: true, sheetResponse: j });
@@ -137,12 +134,13 @@ app.post('/api/join', async (req, res) => {
   }
 });
 
-/* ---------- FAUCET (real CFC send) ---------- */
+/* ---------- FAUCET ---------- */
 const grants = new Map();
 
 app.post('/api/faucet', async (req, res) => {
   try {
     const { account, captcha_ok } = req.body || {};
+
     if (!captcha_ok) return res.status(400).json({ ok: false, error: 'Captcha required' });
     if (!account || !/^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(account)) {
       return res.status(400).json({ ok: false, error: 'Invalid account' });
@@ -150,7 +148,8 @@ app.post('/api/faucet', async (req, res) => {
 
     const last = grants.get(account) || 0;
     const now = Date.now();
-    if (now - last < 24 * 60 * 60 * 1000) {
+
+    if (now - last < 86400000) {
       return res.status(429).json({ ok: false, error: 'Faucet already claimed (24h limit)' });
     }
 
@@ -158,6 +157,7 @@ app.post('/api/faucet', async (req, res) => {
     const seed = process.env.ISSUER_SEED || process.env.FAUCET_SEED;
     const currency = process.env.CFC_CURRENCY || 'CFC';
     const value = String(process.env.AMOUNT_CFC || '10');
+
     if (!issuer || !seed) {
       return res.status(500).json({ ok: false, error: 'Server faucet not configured' });
     }
@@ -165,15 +165,22 @@ app.post('/api/faucet', async (req, res) => {
     const client = new xrpl.Client(process.env.RIPPLED_URL || 'wss://s1.ripple.com');
     await client.connect();
 
-    // Require trustline first
-    const al = await client.request({ command: 'account_lines', account, ledger_index: 'validated', peer: issuer });
+    const al = await client.request({
+      command: 'account_lines',
+      account,
+      ledger_index: 'validated',
+      peer: issuer
+    });
+
     const hasLine = (al.result?.lines || []).some(l => l.currency === currency);
+
     if (!hasLine) {
       await client.disconnect();
       return res.status(400).json({ ok: false, error: 'No CFC trustline. Please add trustline first.' });
     }
 
     const wallet = xrpl.Wallet.fromSeed(seed);
+
     const tx = {
       TransactionType: "Payment",
       Account: wallet.address,
@@ -181,9 +188,7 @@ app.post('/api/faucet', async (req, res) => {
       Amount: { currency, issuer, value }
     };
 
-    // Wider window to avoid late-ledger temREDUNDANT
-    const filled = await client.autofill(tx, { max_ledger_offset: 600});
-
+    const filled = await client.autofill(tx, { max_ledger_offset: 60 });
     const signed = wallet.sign(filled);
     const result = await client.submitAndWait(signed.tx_blob);
 
@@ -191,11 +196,7 @@ app.post('/api/faucet', async (req, res) => {
 
     if (result.result?.meta?.TransactionResult === 'tesSUCCESS') {
       grants.set(account, now);
-      return res.json({
-        ok: true,
-        hash: result.result?.tx_json?.hash,
-        message: 'CFC sent successfully!'
-      });
+      return res.json({ ok: true, hash: result.result?.tx_json?.hash });
     } else {
       return res.status(500).json({
         ok: false,
@@ -215,7 +216,10 @@ app.get("/", (_req, res) =>
 
 /* ---------- START ---------- */
 const port = process.env.PORT || 10000;
-const server = app.listen(port, () => console.log(`Server listening on ${port}`));
+const server = app.listen(port, () =>
+  console.log(`Server listening on ${port}`)
+);
+
 server.keepAliveTimeout = 120000;
 server.headersTimeout = 120000;
 
