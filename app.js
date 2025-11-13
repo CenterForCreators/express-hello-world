@@ -10,18 +10,18 @@ const app = express();
 app.use(cors({
  origin: [
   "https://centerforcreators.com",
+  "https://centerforcreators.com/nft-marketplace",
   "https://centerforcreators.nft",
-  "https://centerforcreators.github.io",
-  "https://centerforcreators.github.io/express-hello-world/",
   "https://cfc-faucet.onrender.com",
+  "https://cfc-nft-marketplace-frontend.onrender.com",
   "https://cf-ipfs.com",
   "https://gateway.pinata.cloud",
   "https://ipfs.io",
   "https://cloudflare-ipfs.com",
   "https://dweb.link"
-],
-methods: ["GET", "POST"],
-allowedHeaders: ["Content-Type"]
+ ],
+ methods: ["GET", "POST"],
+ allowedHeaders: ["Content-Type"]
 }));
 
 app.use(express.json());
