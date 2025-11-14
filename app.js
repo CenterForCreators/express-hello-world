@@ -18,7 +18,8 @@ app.use(cors({
     "https://centerforcreators.github.io",
     "https://centerforcreators.nft",
     "https://cf-ipfs.com",
-    "https://dweb.link"
+    "https://dweb.link",
+    "https://cfc-faucet.onrender.com"
   ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
