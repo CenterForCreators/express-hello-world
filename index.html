@@ -45,14 +45,16 @@
     .note{font-size:12px;color:#9fb0d1;margin-top:6px}
   </style>
 <script>
-    // ------- CONFIG (single block) -------
-    window.CONFIG = { USE_CORS_PROXY: true, CORS_PROXY: 'https://cors.isomorphic-git.org/', 
-      FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
-      faucetAmount: 10,
-      currencyCode: 'CFC',
-      issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
-};
-  </script>
+  // ------- CONFIG (single block) -------
+  window.CONFIG = {
+    faucetAmount: 10,
+    currencyCode: 'CFC',
+    USE_CORS_PROXY: false,
+    CORS_PROXY: '',
+    FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
+    issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8'
+  };
+</script>
 <script>
     // Helpers
     function $(sel){ return document.querySelector(sel); }
