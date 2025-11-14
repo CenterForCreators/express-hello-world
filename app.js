@@ -1,4 +1,4 @@
-// ===== app.js (final faucet backend with full XUMM SDK CORS/MIME fix + static frontend) =====
+// ===== app.js (final faucet backend with Xumm pay + CORS + static frontend + SDK FIX) =====
 
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
@@ -8,7 +8,22 @@ const path = require("path");
 
 const app = express();
 
-/* ---------- STATIC FRONTEND ---------- */
+/* -------------------------------------------------
+   1) SDK ROUTES MUST BE ABOVE STATIC SERVING  ✅ FIX
+---------------------------------------------------*/
+app.get('/sdk/xumm.min.js', async (_req, res) => {
+  const r = await fetch("https://xumm.app/assets/cdn/xumm.min.js");
+  res.type("application/javascript").send(await r.text());
+});
+
+app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
+  const r = await fetch("https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js");
+  res.type("application/javascript").send(await r.text());
+});
+
+/* -------------------------------------------------
+   2) STATIC FILES — MUST COME AFTER SDK ROUTES
+---------------------------------------------------*/
 app.use(express.static(path.join(__dirname, "public")));
 
 /* ---------- CORS ---------- */
@@ -19,7 +34,7 @@ app.use(cors({
     "https://centerforcreators.nft",
     "https://cf-ipfs.com",
     "https://dweb.link",
-    "https://cfc-faucet.onrender.com"  // allow own frontend
+    "https://cfc-faucet.onrender.com"
   ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
@@ -28,45 +43,9 @@ app.use(cors({
 app.use(express.json());
 
 /* ---------- HEALTH ---------- */
-app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
-/* ============================================================
-   FIXED XUMM SDK + XRPL SDK ENDPOINTS
-   (Correct headers, correct MIME, caching, no redirect breaks)
-   ============================================================ */
-app.get("/sdk/xumm.min.js", async (req, res) => {
-  try {
-    const upstream = await fetch("https://xumm.app/assets/cdn/xumm.min.js");
-
-    res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-    res.setHeader("Access-Control-Allow-Origin", "*");               // <-- BIG FIX
-    res.setHeader("Cache-Control", "public, max-age=86400");         // 1 day
-
-    const txt = await upstream.text();
-    return res.send(txt);
-  } catch (e) {
-    console.error("xumm.min.js error:", e);
-    res.status(500).send("// xumm load failed");
-  }
-});
-
-app.get("/sdk/xrpl-latest-min.js", async (req, res) => {
-  try {
-    const upstream = await fetch("https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js");
-
-    res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-    res.setHeader("Access-Control-Allow-Origin", "*");               // <-- BIG FIX
-    res.setHeader("Cache-Control", "public, max-age=86400");
-
-    const txt = await upstream.text();
-    return res.send(txt);
-  } catch (e) {
-    console.error("xrpl-latest-min.js error:", e);
-    res.status(500).send("// xrpl load failed");
-  }
-});
-
-/* ---------- PAY (RLUSD & XRP) ---------- */
+/* ---------- PAY (Xumm Payload) ---------- */
 const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
 const XUMM_API_SECRET = process.env.XUMM_API_SECRET || "";
 const PAY_DESTINATION = process.env.PAY_DESTINATION || "rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd";
@@ -85,12 +64,14 @@ async function createXummPayload(payload) {
   const j = await r.json();
   console.log("Xumm payload response:", j);
 
-  if (!j.next || !j.next.always) throw new Error("Invalid Xumm response");
+  if (!j.next || !j.next.always) {
+    throw new Error("Xumm API key/secret invalid or response malformed");
+  }
 
   return j.next.always;
 }
 
-// RLUSD
+// Pay RLUSD
 app.get("/api/pay-rlusd", async (_req, res) => {
   try {
     const link = await createXummPayload({
@@ -109,14 +90,14 @@ app.get("/api/pay-rlusd", async (_req, res) => {
       }
     });
 
-    res.redirect(link);
+    return res.redirect(link);
   } catch (e) {
     console.error("pay-rlusd error:", e);
-    res.status(500).json({ ok: false, error: "Xumm error" });
+    return res.status(500).json({ ok: false, error: "Xumm error" });
   }
 });
 
-// XRP
+// Pay XRP
 app.get("/api/pay-xrp", async (_req, res) => {
   try {
     const link = await createXummPayload({
@@ -131,21 +112,22 @@ app.get("/api/pay-xrp", async (_req, res) => {
       }
     });
 
-    res.redirect(link);
+    return res.redirect(link);
   } catch (e) {
     console.error("pay-xrp error:", e);
-    res.status(500).json({ ok: false, error: "Xumm error" });
+    return res.status(500).json({ ok: false, error: "Xumm error" });
   }
 });
 
-/* ---------- JOIN ---------- */
-app.post("/api/join", async (req, res) => {
-  const email = (req.body?.email || "").trim();
+/* ---------- JOIN (Google Sheets) ---------- */
+app.post('/api/join', async (req, res) => {
+  const email = (req.body && req.body.email || "").trim();
   if (!email) return res.status(400).json({ ok: false, error: "Missing email" });
 
-  try {
-    const scriptURL = "https://script.google.com/macros/s/AKfycbx4xRkESlayCqBmXV1GlYJMh90_WpfytBGbTMoLIt8oCq6MYMTxnghbFv7FjFQynxEQ/exec";
+  const scriptURL =
+    "https://script.google.com/macros/s/AKfycbx4xRkESlayCqBmXV1GlYJMh90_WpfytBGbTMoLIt8oCq6MYMTxnghbFv7FjFQynxEQ/exec";
 
+  try {
     const r = await fetch(scriptURL, {
       method: "POST",
       body: new URLSearchParams({ email })
@@ -167,14 +149,14 @@ app.post("/api/faucet", async (req, res) => {
     const { account, captcha_ok } = req.body || {};
 
     if (!captcha_ok) return res.status(400).json({ ok: false, error: "Captcha required" });
-    if (!/^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(account))
+    if (!account || !/^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(account)) {
       return res.status(400).json({ ok: false, error: "Invalid account" });
+    }
 
     const last = grants.get(account) || 0;
     const now = Date.now();
-
     if (now - last < 86400000)
-      return res.status(429).json({ ok: false, error: "Faucet already claimed (24h)" });
+      return res.status(429).json({ ok: false, error: "Faucet already claimed (24h limit)" });
 
     const issuer = process.env.ISSUER_CLASSIC || process.env.CFC_ISSUER;
     const seed = process.env.ISSUER_SEED || process.env.FAUCET_SEED;
@@ -194,10 +176,13 @@ app.post("/api/faucet", async (req, res) => {
       peer: issuer
     });
 
-    const hasLine = (al.result?.lines || []).some(l => l.currency === currency);
+    const hasLine = (al.result?.lines || []).some((l) => l.currency === currency);
+
     if (!hasLine) {
       await client.disconnect();
-      return res.status(400).json({ ok: false, error: "No CFC trustline" });
+      return res
+        .status(400)
+        .json({ ok: false, error: "No CFC trustline. Please add trustline first." });
     }
 
     const wallet = xrpl.Wallet.fromSeed(seed);
@@ -217,25 +202,29 @@ app.post("/api/faucet", async (req, res) => {
 
     if (result.result?.meta?.TransactionResult === "tesSUCCESS") {
       grants.set(account, now);
-      return res.json({ ok: true, hash: result.result.tx_json.hash });
+      return res.json({ ok: true, hash: result.result?.tx_json?.hash });
+    } else {
+      return res.status(500).json({
+        ok: false,
+        error: result.result?.meta?.TransactionResult || "Submit failed"
+      });
     }
-
-    return res.status(500).json({ ok: false, error: "Submit failed" });
-
   } catch (e) {
-    console.error("FAUCET error:", e);
+    console.error("faucet error:", e);
     return res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-/* ---------- ROOT SERVES FRONTEND ---------- */
+/* ---------- ROOT serves frontend ---------- */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /* ---------- START ---------- */
 const port = process.env.PORT || 10000;
-const server = app.listen(port, () => console.log(`Server listening on ${port}`));
+const server = app.listen(port, () => {
+  console.log(`Server listening on ${port}`);
+});
 
 server.keepAliveTimeout = 120000;
 server.headersTimeout = 120000;
