@@ -4,7 +4,7 @@ const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.defaul
 const express = require("express");
 const xrpl = require("xrpl");
 const cors = require("cors");
-const path = require("path");   // ✅ REQUIRED FOR SERVING FRONTEND
+const path = require("path");   // ✅ for serving frontend files
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(cors({
     "https://centerforcreators.nft",
     "https://cf-ipfs.com",
     "https://dweb.link",
-    "https://cfc-faucet.onrender.com"
+    "https://cfc-faucet.onrender.com"   // ✅ allow own frontend
   ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
@@ -218,7 +218,7 @@ app.post('/api/faucet', async (req, res) => {
 
 /* ---------- ROOT serves the real frontend ---------- */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));   // ✅ FULL FIX
+  res.sendFile(path.join(__dirname, "public", "index.html"));   // ✅ this replaces "Hello from Render"
 });
 
 /* ---------- START ---------- */
