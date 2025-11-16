@@ -1,4 +1,4 @@
-// ===== app.js (final faucet backend with Xumm pay + CORS + static frontend + SDK FIX) =====
+// ===== FIXED app.js — Render/iPhone/Edge Safe =====
 
 const fetch = global.fetch || ((...a) => import('node-fetch').then(m => m.default(...a)));
 const express = require("express");
@@ -9,24 +9,19 @@ const path = require("path");
 const app = express();
 
 /* -------------------------------------------------
-   1) SDK ROUTES MUST BE ABOVE STATIC SERVING  ✅ FIX
+   0) GLOBAL MIDDLEWARE — VERY IMPORTANT FOR RENDER
 ---------------------------------------------------*/
-app.get('/sdk/xumm.min.js', async (_req, res) => {
-  const r = await fetch("https://xumm.app/assets/cdn/xumm.min.js");
-  res.type("application/javascript").send(await r.text());
-});
-
-app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
-  const r = await fetch("https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js");
-  res.type("application/javascript").send(await r.text());
+app.use((req, res, next) => {
+  // Ensure JS files are not served as text/html (Render bug)
+  if (req.path.endsWith(".js")) {
+    res.type("application/javascript");
+  }
+  next();
 });
 
 /* -------------------------------------------------
-   2) STATIC FILES — MUST COME AFTER SDK ROUTES
+   1) ENABLE CORS BEFORE ANY ROUTES
 ---------------------------------------------------*/
-app.use(express.static(path.join(__dirname, "public")));
-
-/* ---------- CORS ---------- */
 app.use(cors({
   origin: [
     "https://centerforcreators.com",
@@ -42,10 +37,50 @@ app.use(cors({
 
 app.use(express.json());
 
-/* ---------- HEALTH ---------- */
+/* -------------------------------------------------
+   2) SELF-HOSTED SDK FILES (REQUIRED FOR iPHONE + EDGE)
+---------------------------------------------------*/
+app.get('/sdk/xumm.min.js', async (_req, res) => {
+  try {
+    const r = await fetch("https://xumm.app/assets/cdn/xumm.min.js");
+    const text = await r.text();
+    res.type("application/javascript").send(text);
+  } catch (err) {
+    console.error("Error loading XUMM SDK:", err);
+    res.status(500).send("// Failed to load XUMM SDK");
+  }
+});
+
+app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
+  try {
+    const r = await fetch("https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js");
+    const text = await r.text();
+    res.type("application/javascript").send(text);
+  } catch (err) {
+    console.error("Error loading XRPL SDK:", err);
+    res.status(500).send("// Failed to load XRPL SDK");
+  }
+});
+
+/* -------------------------------------------------
+   3) STATIC FILES (PUBLIC FOLDER)
+---------------------------------------------------*/
+app.use(express.static(path.join(__dirname, "public"), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".js")) {
+      res.setHeader("Content-Type", "application/javascript");
+    }
+  }
+}));
+
+/* -------------------------------------------------
+   HEALTH CHECK
+---------------------------------------------------*/
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-/* ---------- PAY (Xumm Payload) ---------- */
+/* -------------------------------------------------
+   XUMM PAY ROUTES
+---------------------------------------------------*/
 const XUMM_API_KEY = process.env.XUMM_API_KEY || "ffa83df2-e68d-4172-a77c-e7af7e5274ea";
 const XUMM_API_SECRET = process.env.XUMM_API_SECRET || "";
 const PAY_DESTINATION = process.env.PAY_DESTINATION || "rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd";
@@ -119,7 +154,9 @@ app.get("/api/pay-xrp", async (_req, res) => {
   }
 });
 
-/* ---------- JOIN (Google Sheets) ---------- */
+/* -------------------------------------------------
+   JOIN → Google Sheets
+---------------------------------------------------*/
 app.post('/api/join', async (req, res) => {
   const email = (req.body && req.body.email || "").trim();
   if (!email) return res.status(400).json({ ok: false, error: "Missing email" });
@@ -141,7 +178,9 @@ app.post('/api/join', async (req, res) => {
   }
 });
 
-/* ---------- FAUCET ---------- */
+/* -------------------------------------------------
+   CFC FAUCET
+---------------------------------------------------*/
 const grants = new Map();
 
 app.post("/api/faucet", async (req, res) => {
@@ -215,12 +254,16 @@ app.post("/api/faucet", async (req, res) => {
   }
 });
 
-/* ---------- ROOT serves frontend ---------- */
-app.get("/", (req, res) => {
+/* -------------------------------------------------
+   FALLBACK (Fixes Unexpected token '<' errors)
+---------------------------------------------------*/
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* ---------- START ---------- */
+/* -------------------------------------------------
+   START SERVER
+---------------------------------------------------*/
 const port = process.env.PORT || 10000;
 const server = app.listen(port, () => {
   console.log(`Server listening on ${port}`);
@@ -229,4 +272,4 @@ const server = app.listen(port, () => {
 server.keepAliveTimeout = 120000;
 server.headersTimeout = 120000;
 
-// ===== end app.js =====
+// ===== END FIXED app.js =====
