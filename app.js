@@ -9,10 +9,9 @@ const path = require("path");
 const app = express();
 
 /* -------------------------------------------------
-   0) GLOBAL MIDDLEWARE — VERY IMPORTANT FOR RENDER
+   0) GLOBAL MIDDLEWARE — Ensure JS served correctly
 ---------------------------------------------------*/
 app.use((req, res, next) => {
-  // Ensure JS files are not served as text/html (Render bug)
   if (req.path.endsWith(".js")) {
     res.type("application/javascript");
   }
@@ -20,7 +19,7 @@ app.use((req, res, next) => {
 });
 
 /* -------------------------------------------------
-   1) ENABLE CORS BEFORE ANY ROUTES
+   1) ENABLE CORS BEFORE ROUTES
 ---------------------------------------------------*/
 app.use(cors({
   origin: [
@@ -38,7 +37,7 @@ app.use(cors({
 app.use(express.json());
 
 /* -------------------------------------------------
-   2) SELF-HOSTED SDK FILES (REQUIRED FOR iPHONE + EDGE)
+   2) SELF-HOSTED SDK FILES
 ---------------------------------------------------*/
 app.get('/sdk/xumm.min.js', async (_req, res) => {
   try {
@@ -63,7 +62,7 @@ app.get('/sdk/xrpl-latest-min.js', async (_req, res) => {
 });
 
 /* -------------------------------------------------
-   3) STATIC FILES (PUBLIC FOLDER)
+   3) STATIC FILES (PUBLIC)
 ---------------------------------------------------*/
 app.use(express.static(path.join(__dirname, "public"), {
   setHeaders: (res, filePath) => {
@@ -106,7 +105,7 @@ async function createXummPayload(payload) {
   return j.next.always;
 }
 
-// Pay RLUSD
+// RLUSD
 app.get("/api/pay-rlusd", async (_req, res) => {
   try {
     const link = await createXummPayload({
@@ -132,7 +131,7 @@ app.get("/api/pay-rlusd", async (_req, res) => {
   }
 });
 
-// Pay XRP
+// XRP
 app.get("/api/pay-xrp", async (_req, res) => {
   try {
     const link = await createXummPayload({
@@ -241,4 +240,38 @@ app.post("/api/faucet", async (req, res) => {
 
     if (result.result?.meta?.TransactionResult === "tesSUCCESS") {
       grants.set(account, now);
-      return re
+      return res.json({ ok: true, hash: result.result?.tx_json?.hash });
+    } else {
+      return res.status(500).json({
+        ok: false,
+        error: result.result?.meta?.TransactionResult || "Submit failed"
+      });
+    }
+  } catch (e) {
+    console.error("faucet error:", e);
+    return res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
+/* -------------------------------------------------
+   4) CATCH-ALL ROUTE — MUST BE LAST
+---------------------------------------------------*/
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/sdk/")) {
+    return res.status(404).send("// SDK file not found");
+  }
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+/* -------------------------------------------------
+   START SERVER
+---------------------------------------------------*/
+const port = process.env.PORT || 10000;
+const server = app.listen(port, () => {
+  console.log(`Server listening on ${port}`);
+});
+
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
+
+// ===== END FIXED app.js =====
