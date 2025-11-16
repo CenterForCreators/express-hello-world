@@ -1871,7 +1871,7 @@ function cleanTexts(){
     }
   }
 
-  <script>
+  <script type="module">
 /* SAFE claim handler: no backend error text is surfaced */
 (function(){
   var btn = document.getElementById('claimBtn')
@@ -1965,7 +1965,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <!-- This block was showing as text; it MUST live inside <script> -->
-<script>
+<script type="module">
 try {
   // (nothing here on purpose: you only had closing parts visible)
 } catch (e) {
@@ -1979,7 +1979,7 @@ try {
 }
 </script>
 
-<script>
+<script type="module">
 (function(){
   function create(tag, attrs){
     var el = document.createElement(tag);
@@ -2005,7 +2005,7 @@ try {
     }
   }
 
-  // Wire Join submit (leave endpoint as-is if you’re still using faucet join; otherwise swap URL)
+  // Wire Join submit
   function wireJoin(){
     var form = document.getElementById('joinForm');
     if (!form || form.__wired) return;
@@ -2018,7 +2018,7 @@ try {
       if(!email){ if(statusEl){ statusEl.className='status err'; statusEl.textContent='Enter an email'; } return; }
       if(statusEl){ statusEl.className='status warn'; statusEl.textContent='Submitting…'; }
       try{
-        const res = await fetch((CONFIG && CONFIG.USE_CORS_PROXY ? (CONFIG.CORS_PROXY + 'https://cfc-faucet.onrender.com/api/join') : 'https://cfc-faucet.onrender.com/api/join'), {
+        const res = await fetch('https://cfc-faucet.onrender.com/api/join', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ email })
         });
@@ -2037,7 +2037,7 @@ try {
     });
   }
 
-  // Optional helper to hide unwanted text
+  // Optional helper
   function cleanTexts(){
     document.querySelectorAll('body *').forEach(function(n){
       var t = (n.innerText || n.textContent || '').trim();
@@ -2047,27 +2047,27 @@ try {
     });
   }
 
- function boot(){
-  try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
-  try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
-  try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
+  function boot(){
+    try { if (typeof ensureDividerCSS==='function') ensureDividerCSS(); } catch(e){}
+    try { if (typeof ensureFaucetDivider==='function') ensureFaucetDivider(); } catch(e){}
+    try { if (typeof ensureClaimUI==='function') ensureClaimUI(); } catch(e){}
 
-  // Delay only the claim wiring by 300ms to improve Chrome wallet sync
-  setTimeout(() => {
-    try { if (typeof wireClaim==='function') wireClaim(); } catch(e){}
-  }, 300);
-  
-  ensureJoinForm();
-  wireJoin();
-  
-  try { cleanTexts(); } catch(e){}
-}
+    setTimeout(() => {
+      try { if (typeof wireClaim==='function') wireClaim(); } catch(e){}
+    }, 300);
+
+    ensureJoinForm();
+    wireJoin();
+
+    try { cleanTexts(); } catch(e){}
+  }
 
   if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', boot); }
   else { boot(); }
   try { new MutationObserver(boot).observe(document.documentElement, { childList:true, subtree:true }); } catch(e){}
 })();
 </script>
+
 <script>
   document.getElementById('emailSubmit').addEventListener('click', async () => {
     const emailInput = document.getElementById('emailInput');
@@ -2084,7 +2084,7 @@ try {
     emailMsg.style.color = '#9fb0d1';
 
     try {
-      const response = await fetch('https://cfc-faucet.onrender.com/api/join', {  // Updated to Render backend URL
+      const response = await fetch('https://cfc-faucet.onrender.com/api/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -2107,5 +2107,5 @@ try {
   });
 </script>
 
-</body> 
+</body>
 </html>
