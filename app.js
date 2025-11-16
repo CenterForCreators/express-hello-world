@@ -241,35 +241,4 @@ app.post("/api/faucet", async (req, res) => {
 
     if (result.result?.meta?.TransactionResult === "tesSUCCESS") {
       grants.set(account, now);
-      return res.json({ ok: true, hash: result.result?.tx_json?.hash });
-    } else {
-      return res.status(500).json({
-        ok: false,
-        error: result.result?.meta?.TransactionResult || "Submit failed"
-      });
-    }
-  } catch (e) {
-    console.error("faucet error:", e);
-    return res.status(500).json({ ok: false, error: String(e.message || e) });
-  }
-});
-
-/* -------------------------------------------------
-   FALLBACK (Fixes Unexpected token '<' errors)
----------------------------------------------------*/
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-/* -------------------------------------------------
-   START SERVER
----------------------------------------------------*/
-const port = process.env.PORT || 10000;
-const server = app.listen(port, () => {
-  console.log(`Server listening on ${port}`);
-});
-
-server.keepAliveTimeout = 120000;
-server.headersTimeout = 120000;
-
-// ===== END FIXED app.js =====
+      return re
