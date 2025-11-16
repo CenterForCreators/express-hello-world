@@ -63,11 +63,7 @@
     function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
   </script>
 <!-- Corrected XUMM + XRPL SDK load -->
-<script 
-  src="https://xumm.app/assets/cdn/xumm.min.js"
-  onload="try { window.xumm = new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e'); } catch(e){ console.error(e); }">
-</script>
-
+<script src="/sdk/xumm.min.js" onload="window.xumm = new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');"></script>
 <script src="/sdk/xrpl-latest-min.js"></script>
 
 <style>
