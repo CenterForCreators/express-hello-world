@@ -545,46 +545,33 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-<script>
-window.CFC = window.CFC||{};
 
-async function connect(){
-  try{
-    const res = await xumm.authorize();
-    if (res?.me?.account){
-      window.connectedAccount = res.me.account;
-      var a=document.getElementById('address'); if(a) a.textContent = res.me.account;
-      var m=document.getElementById('claimMsg'); if(m) m.textContent='';
-    }
-  }catch(e){ var m=document.getElementById('claimMsg'); if(m) m.textContent='Connection cancelled.'; }
-}
-
-
-    const signin = await xumm.payload.createAndSubscribe({ txjson: { TransactionType: 'SignIn' } }, () => {});
-    if (signin?.created?.next) window.open(signin.created.next.always, '_blank');
-    const res = await signin.resolved;
-    if (!res?.signed || !res?.response?.account){ var m=document.getElementById('claimMsg'); if(m) m.textContent='Claim cancelled.'; if(spinner) spinner.style.display='none'; return; }
-    if (res.response.account !== window.connectedAccount){ var m=document.getElementById('claimMsg'); if(m) m.textContent='Use the same wallet you connected.'; if(spinner) spinner.style.display='none'; return; }
-    const r = await fetch(CONFIG.FAUCET_ENDPOINT, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ payload_uuid: signin.created.uuid, address: window.connectedAccount })
-    });
-    const data = await r.json().catch(()=>({}));
-    var m=document.getElementById('claimMsg');
-    if (r.ok) m && (m.textContent='✅ 10 CFC sent! Check your wallet soon.');
-    else m && (m.textContent=(data?.error || 'Claim failed.'));
-  }catch(e){ var m=document.getElementById('claimMsg'); if(m) m.textContent='Network error.'; }
-  if(spinner) spinner.style.display='none';
-  window.__cfcCaptchaPassed=false;
-}
-</script>
 <script>
 // Simple math CAPTCHA: digits 0–9, refresh each time
 let _a = 0, _b = 0;
 function newCaptcha(){
   _a = Math.floor(Math.random()*10);
   _b = Math.floor(Math.random()*10);
-  const A = document.getElementById('numA'), B = document.getElementById('numB');
+  const A = document.getElementById('numA'), B = document.getElementById('numB');<script>
+window.CFC = window.CFC || {};
+
+async function connect(){
+  try {
+    const res = await xumm.authorize();
+    if (res?.me?.account){
+      window.connectedAccount = res.me.account;
+      var a = document.getElementById('address'); 
+      if(a) a.textContent = res.me.account;
+      var m = document.getElementById('claimMsg'); 
+      if(m) m.textContent = '';
+    }
+  } catch(e) {
+    var m = document.getElementById('claimMsg'); 
+    if(m) m.textContent = 'Connection cancelled.';
+  }
+}
+</script>
+
   if (A) A.textContent = _a;
   if (B) B.textContent = _b;
   const I = document.getElementById('captchaInput');
