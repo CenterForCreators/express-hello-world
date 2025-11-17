@@ -45,16 +45,14 @@
     .note{font-size:12px;color:#9fb0d1;margin-top:6px}
   </style>
 <script>
-  // ------- CONFIG (single block) -------
-  window.CONFIG = {
-    faucetAmount: 10,
-    currencyCode: 'CFC',
-    USE_CORS_PROXY: false,
-    CORS_PROXY: '',
-    FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
-    issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8'
-  };
-</script>
+    // ------- CONFIG (single block) -------
+    window.CONFIG = { USE_CORS_PROXY: true, CORS_PROXY: 'https://cors.isomorphic-git.org/', 
+      FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
+      faucetAmount: 10,
+      currencyCode: 'CFC',
+      issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
+};
+  </script>
 <script>
     // Helpers
     function $(sel){ return document.querySelector(sel); }
@@ -62,13 +60,11 @@
     function hide(el){ el.style.display='none'; }
     function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
   </script>
-<!-- Corrected XUMM + XRPL SDK load -->
-<script src="/sdk/xumm.min.js" onload="window.xumm = new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');"></script>
-<script src="/sdk/xrpl-latest-min.js"></script>
-
-<style>
-  /* CFC-AUTO-STYLE */
-  .server-waiting-url { display: none !important; }
+<!-- Render-hosted SDKs -->
+<script onload="try{window.xumm=new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');}catch(e){console.error(e);}" src="https://cfc-faucet.onrender.com/sdk/xumm.min.js"></script>
+<script src="https://cfc-faucet.onrender.com/sdk/xrpl-latest-min.js"></script>
+<style>/* CFC-AUTO-STYLE */
+  .server-waiting-url{ display:none !important; }
 </style>
 </head>
 <body>
