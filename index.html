@@ -68,12 +68,13 @@
     function hide(el){ el.style.display='none'; }
     function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
   </script>
-<!-- Render-hosted SDKs -->
-<script onload="try{window.xumm=new Xumm('eebd4c17-c3ef-435b-b891-89afb99e259e');}catch(e){console.error(e);}" src="https://cfc-faucet.onrender.com/sdk/xumm.min.js"></script>
-<script src="https://cfc-faucet.onrender.com/sdk/xrpl-latest-min.js"></script>
-<style>/* CFC-AUTO-STYLE */
+<!-- CDN SDKs (working everywhere) -->
+<script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
+<style>
   .server-waiting-url{ display:none !important; }
 </style>
+
 </head>
 <body>
 <div class="wrap">
