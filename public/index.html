@@ -1,43 +1,28 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-<!-- Xumm & XRPL SDKs -->
+<!-- Xaman (XUMM) SDK -->
 <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+
+<!-- XRPL SDK -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
-<!-- Initialize XRPL Client -->
-<script>
-    const client = new xrpl.Client('wss://s1.ripple.com');
-  </script>
-<!-- BUILD TAG: CFC-OK -->
-<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
+
+<!-- Remove early client init — it breaks page before xrpl loads -->
+<!-- The client will be initialized later, AFTER scripts load -->
+
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Center for Creators — CFC on XRPL</title>
-<meta content="Center for Creators NFT site — Faucet + Marketplace powered by CFC on XRPL." name="description"/>
-<!-- Render-hosted SDKs (so gateways don't block) -->
+<meta name="description" content="Center for Creators NFT site — Faucet + Marketplace powered by CFC on XRPL." />
+
 <style>
     .divider{height:1px;background:var(--accent);opacity:0.6;margin:10px 0 14px 0;border-radius:999px}
-
 
     :root { --bg:#0b1220; --card:#121a2b; --text:#f6f8ff; --muted:#9fb0d1; --accent:#7db8ff; --ok:#1fcf7c; --warn:#ffcc00; --err:#ff6b6b;}
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     a{color:var(--accent);text-decoration:none}
     .wrap{max-width:1100px;margin:0 auto;padding:22px}
-    header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand img{width:44px;height:44px;border-radius:10px;display:block;background:#7c3aed}
-    h1{font-size:20px;margin:0;line-height:1.2}
-    .btn{background:var(--accent);color:#091224;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
-    .btn.secondary{background:#cfe3ff;color:#041225}
-    .btn.ghost{background:transparent;border:1px solid #2a3a60;color:var(--text)}
-    .btn.small{padding:8px 10px;font-size:14px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-    .card{background:var(--card);border:1px solid #202c45;border-radius:16px;padding:18px}
-    .muted{color:var(--muted)}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .nft-img{width:100%;height:180px;background:#0e1527;border-radius:12px;object-fit:cover;display:block}
-    input[type="email"], input[type="text"]{width:100%;outline:none;padding:10px;border-radius:10px;border:1px solid #2a3a60;background:#0e1527;color:#e8f0ff}
-    .kv{display:flex;gap:10px;align-items:center}
     .kv div:first-child{width:140px;color:#9fb0d1}
     footer{margin-top:30px;color:#9fb0d1;font-size:14px}
     .status{margin-top:8px;font-size:14px}
@@ -45,85 +30,116 @@
     .toast{position:fixed;right:16px;bottom:16px;background:#132b1f;color:#caffa9;border:1px solid #1b5e2c;border-radius:12px;padding:12px 14px;display:none;z-index:9999}
     .spinner{display:none;width:16px;height:16px;border-radius:50%;border:3px solid #2a3a60;border-top-color:var(--accent);animation:spin 0.9s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    /* ensure buttons clickable even in gateway viewer */
+
     #connectBtn,#claimBtn{pointer-events:auto;opacity:1}
+
     .captcha{display:flex;gap:8px;align-items:center}
     .captcha .tag{background:#1a2745;color:#cfe3ff;padding:4px 8px;border-radius:999px;font-size:12px}
     .note{font-size:12px;color:#9fb0d1;margin-top:6px}
   </style>
+
+<!-- ------- CLEAN CONFIG ------- -->
 <script>
-    // ------- CONFIG (single block) -------
-    window.CONFIG = { USE_CORS_PROXY: true, CORS_PROXY: 'https://cors.isomorphic-git.org/', 
-      FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
-      faucetAmount: 10,
-      currencyCode: 'CFC',
-      issuer: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
+window.CONFIG = {
+  FAUCET_ENDPOINT: "https://cfc-faucet.onrender.com/api/faucet",
+  faucetAmount: 10,
+  currencyCode: "CFC",
+  issuer: "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"
 };
-  </script>
+</script>
+
+<!-- ------- BASIC HELPERS ------- -->
 <script>
-    // Helpers
-    function $(sel){ return document.querySelector(sel); }
-    function show(el){ el.style.display='block'; }
-    function hide(el){ el.style.display='none'; }
-    function toast(msg){ const t=$('#toast'); t.textContent=msg; show(t); setTimeout(()=>hide(t), 3500); }
-  </script>
-<!-- CDN SDKs (working everywhere) -->
-<script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
-<style>
-  .server-waiting-url{ display:none !important; }
-</style>
+function $(sel){ return document.querySelector(sel); }
+function show(el){ el.style.display='block'; }
+function hide(el){ el.style.display='none'; }
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  show(t);
+  setTimeout(()=>hide(t), 3500);
+}
+</script>
+
 </head>
 <body>
 <div class="wrap">
 <header>
 
-<button class="btn" id="connectBtn" onclick="try{ if(window.connect){connect()} else if(window.xumm){xumm.authorize()} }catch(e){}"><span id="addrBadge" style="margin-left:8px;opacity:0.9"></span>Connect Xaman Wallet</button><div ...="" id="emailInput">
-</div></header>
-<!-- Injected: row (account + balances) -->
+<!-- CLEAN CONNECT BUTTON -->
+<button class="btn" id="connectBtn">
+  <span id="addrBadge" style="margin-left:8px;opacity:0.9"></span>
+  Connect Xaman Wallet
+</button>
+    <!-- Wallet Bar (address only, no balances) -->
 <style>
-  .walletbar{display:flex;gap:14px;align-items:center;margin:10px 0;padding:10px 12px;border:1px solid #202c45;border-radius:12px;background:#0f1729}
-  .tag{background:#1a2745;color:#cfe3ff;padding:4px 8px;border-radius:999px;font-size:12px}
+  .walletbar{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    margin:10px 0;
+    padding:10px 12px;
+    border:1px solid #202c45;
+    border-radius:12px;
+    background:#0f1729;
+  }
+  .tag{
+    background:#1a2745;
+    color:#cfe3ff;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:12px;
+  }
 </style>
+
 <div class="walletbar" id="walletbar" style="display:none">
-<span class="tag" id="wb_status">Not connected</span>
-<span class="muted">Account:</span><span id="wb_account" style="font-family:monospace"></span>
-<span class="muted">XRP:</span><span id="wb_xrp">—</span>
-<span class="muted">CFC:</span><span id="wb_cfc">—</span>
-<button class="btn small" id="wb_trust" style="display:none" type="button">Add CFC Trustline</button>
-<span id="connectedAddress">Not connected</span></div>
+  <span class="tag" id="wb_status">Connected</span>
+  <span class="muted">Account:</span>
+  <span id="wb_account" style="font-family:monospace"></span>
+</div>
+
+<!-- CFC Faucet -->
 <div class="card" id="faucetCard" style="margin-bottom:16px">
-<div class="row" style="justify-content:space-between">
-<div>
-<div style="font-weight:700;margin-bottom:6px">Daily CFC Faucet</div>
-<div class="muted">Claim <strong id="faucetAmount">10</strong> CFC once every 24 hours.</div>
-</div>
-<div class="tag" id="faucetStatus">Server: Waiting for URL</div>
-</div>
-<div class="row" id="cfc-captcha-row" style="margin-top:12px">
-<div class="row" style="margin-top:10px">
-<div id="cfc-captcha" style="margin:10px 0;display:flex;gap:8px;align-items:center;">
-<span class="tag" id="capA">0</span> + <span class="tag" id="capB">0</span> =
-      <input id="capAns" inputmode="numeric" maxlength="2" placeholder="?" style="width:70px" type="text"/>
-<button class="btn small" onclick="if(window.regenCaptcha)window.regenCaptcha()" type="button">↻</button>
-</div>
-<button class="btn" id="claimBtn">Claim CFC</button>
-<div class="spinner" id="claimSpin" style="display:none"></div>
-<div class="status" id="claimStatus"></div>
-</div>
-<div class="muted" id="claimMsg" style="margin-top:8px"></div>
-</div>
-<div class="divider"></div>
-<!-- Tokenization Header Section -->
-<div class="nft-header" style="text-align:center; margin:25px 0;">
-<h1 style="font-size:28px; font-weight:800; color:#fff; margin-bottom:8px;">
-    Tokenization That Empowers Your Purpose
-  </h1>
-<p style="color:#9fb0d1; font-size:17px; max-width:650px; margin:0 auto;">
-    From personal growth to blockchain strategy, every experience on Center for Creators 
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <div style="font-weight:700;margin-bottom:6px">Daily CFC Faucet</div>
+      <div class="muted">Claim <strong id="faucetAmount">10</strong> CFC once every 24 hours.</div>
+    </div>
+    <div class="tag" id="faucetStatus">Ready</div>
+  </div>
+
+  <!-- Captcha -->
+  <div class="row" id="cfc-captcha-row" style="margin-top:12px">
+    <div class="row" style="margin-top:10px">
+      <div id="cfc-captcha" style="margin:10px 0;display:flex;gap:8px;align-items:center;">
+        <span class="tag" id="capA">0</span> + <span class="tag" id="capB">0</span> =
+        <input id="capAns" inputmode="numeric" maxlength="2" placeholder="?" style="width:70px" type="text"/>
+        <button class="btn small" type="button" onclick="regenCaptcha()">↻</button>
+      </div>
+
+      <!-- Claim Button -->
+      <button class="btn" id="claimBtn">Claim CFC</button>
+      <div class="spinner" id="claimSpin" style="display:none"></div>
+      <div class="status" id="claimStatus"></div>
+    </div>
+
+    <div class="muted" id="claimMsg" style="margin-top:8px"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Tokenization Header Section -->
+  <div class="nft-header" style="text-align:center; margin:25px 0;">
+    <h1 style="font-size:28px; font-weight:800; color:#fff; margin-bottom:8px;">
+      Tokenization That Empowers Your Purpose
+    </h1>
+    <p style="color:#9fb0d1; font-size:17px; max-width:650px; margin:0 auto;">
+      From personal growth to blockchain strategy, every experience on Center for Creators
     helps you learn, evolve, and earn CFC rewards.
   </p>
 </div>
+
+    
 <div class="row" style="margin-bottom:12px">
 <button class="btn" id="navMarket">Marketplace</button>
 <button class="btn secondary" id="navPurchases">My Purchases</button>
@@ -196,248 +212,191 @@
 <p>Powered by the CFC Token on the XRP Ledger. Secured by Xaman • App: Center for Creators NFT Market. <a href="https://centerforcreators.com" rel="noreferrer" target="_blank">CenterForCreators.com</a></p>
 </footer>
 </div>
-<script>
-      const CONFIG = {
+    <script>
+/* ========================
+   CLEAN CONFIG 
+======================== */
+const CONFIG = {
   networkWss: 'wss://xrplcluster.com',
   CFC_ISSUER: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
   CFC_CODE: 'CFC',
   RLUSD_ISSUER: 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De',
   XUMM_API_KEY: 'eebd4c17-c3ef-435b-b891-89afb99e259e',
-  EMAIL_FALLBACK_URL: 'https://centerforcreators.com/contact',
   RECEIVER_XRP: 'rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd',
   FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
-  FAUCET_DAILY_AMOUNT: '10',
   ITEMS: [
-    { id: 'svc1', name: 'Private Strategy Session', priceRLUSD: '500', priceXRP: '219' },
-    { id: 'wrk1', name: 'Blockchain Made Simple — Special Edition Book', priceRLUSD: '35', priceXRP: '15'  },
-    { id: 'book1', name: 'The Power to Rise — Special Edition Book', priceRLUSD: '25', priceXRP: '11'}
+    { id:'svc1', name:'Private Strategy Session', priceRLUSD:'500', priceXRP:'219' },
+    { id:'wrk1', name:'Blockchain Made Simple — Book', priceRLUSD:'35', priceXRP:'15' },
+    { id:'book1', name:'The Power to Rise — Book', priceRLUSD:'25', priceXRP:'11' }
   ]
 };
 
-    const client = new xrpl.Client(CONFIG.networkWss)
-    const xumm = new Xumm(CONFIG.XUMM_API_KEY)
-    let connectedAccount = null
+/* ========================
+   GLOBALS
+======================== */
+let client;
+let xumm = new Xumm(CONFIG.XUMM_API_KEY);
+let connectedAccount = null;
 
-        function setStatus(text){ $('#status').textContent = text }
-    function setAddr(text){ $('#address').textContent = text }
-    function showError(msg){ const b=document.getElementById('errorBox'); b.textContent=
-msg; b.style.display='block' }
-    function hideError(){ const b=document.getElementById('errorBox'); b.style.display='none'; b.textContent='' }
-
-    async function ensureConnected(){ if (!client.isConnected()) await client.connect() }
-
-    async function fetchBalances(account){
-      await ensureConnected()
-      const info = await client.request({ command: 'account_info', account })
-      const xrpBalance = (Number(info.result.account_data.Balance) / 1_000_000).toFixed(2)
-      document.getElementById('xrpBalance').textContent = `${xrpBalance} XRP`
-
-      const lines = await client.request({ command: 'account_lines', account })
-      const cfcLine = lines.result.lines.find(l => l.account === CONFIG.CFC_ISSUER && l.currency === CONFIG.CFC_CODE)
-      const cfcBal = cfcLine ? cfcLine.balance : '0'
-      document.getElementById('cfcBalance').textContent = `${cfcBal} CFC`
-
-      const row = document.getElementById('trustlineRow')
-      if(row){ row.style.display = cfcLine ? 'none' : 'flex' }
-      return { xrpBalance, cfcBal, hasCfc: !!cfcLine }
-    }
-
-    async function addCfcTrustline(){
-      if(!connectedAccount){ alert('Connect your wallet first.'); return }
-      await ensureConnected()
-      const tx = {
-        TransactionType: 'TrustSet',
-        Account: connectedAccount,
-        LimitAmount: { currency: CONFIG.CFC_CODE, issuer: CONFIG.CFC_ISSUER, value: '1000000000' }
-      }
-      const payload = await xumm.payload.createAndSubscribe({ txjson: tx }, () => {})
-      if(payload?.created?.next) window.open(payload.created.next.always, '_blank')
-      const res = await payload.resolved
-      if(res.signed){ setStatus('Trustline added. Refreshing balances…'); await fetchBalances(connectedAccount) }
-      else{ alert('Trustline request was cancelled.') }
-    }
-
-    async function connectXaman(){
-      hideError(); setStatus('Connecting…')
-      try{
-        const res = await xumm.authorize()
-        if (res?.me?.account) {
-          connectedAccount = res.me.account
-          setStatus('Connected'); setAddr(connectedAccount); await fetchBalances(connectedAccount)
-          document.getElementById('faucetStatus').textContent = CONFIG.FAUCET_ENDPOINT ? 'Server: Ready' : 'Server: Waiting for URL'
-          document.getElementById('claimBtn').disabled = !CONFIG.FAUCET_ENDPOINT
-        } else {
-          setStatus('Wallet: Disconnected')
-          showError('No wallet connected. If no prompt appeared, add this origin in Xaman Allowed Origins: ' + location.origin)
-        }
-      }catch(e){
-        setStatus('Wallet: Disconnected')
-        showError('Connect blocked. Add this origin in Xaman Allowed Origins: ' + location.origin)
-      }
-    }
-
-   function strToHex(str) {
+/* ========================
+   HELPERS
+======================== */
+function $(s){ return document.querySelector(s); }
+function strToHex(str){
   return Array.from(new TextEncoder().encode(str))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-    .toUpperCase();
+   .map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
 }
 
-async function claimFaucet() {
-  const msgEl = document.getElementById('claimMsg') || document.getElementById('claimStatus');
-  const spin = document.getElementById('claimSpin');
-  try {
-    if (typeof checkCaptcha === 'function' && !checkCaptcha()) {
-      if (msgEl) msgEl.textContent = 'Please solve the math question.';
-      return;
-    }
-    if (!account) {
-      if (msgEl) msgEl.textContent = 'Connect your wallet first (top-right).';
-      return;
-    }
+/* ========================
+   XRPL CLIENT (lazy load)
+======================== */
+async function getClient(){
+  if (!client){
+    client = new xrpl.Client(CONFIG.networkWss);
+    await client.connect();
+  }
+  return client;
+}
 
-    if (msgEl) msgEl.textContent = 'Claiming...';
-    if (spin) spin.style.display = 'inline-block';
+/* ========================
+   CONNECT WALLET
+======================== */
+async function connectXaman(){
+  const res = await xumm.authorize();
+  if(res?.me?.account){
+    connectedAccount = res.me.account;
 
-    const ep = (window.CONFIG && (CONFIG.FAUCET_ENDPOINT || CONFIG.FAUCET_URL))
-      ? (CONFIG.FAUCET_ENDPOINT || CONFIG.FAUCET_URL)
-      : 'https://cfc-faucet.onrender.com/api/faucet';
+    // Show in wallet bar
+    $('#walletbar').style.display = 'flex';
+    $('#wb_account').textContent = connectedAccount;
 
-    const res = await fetch(ep, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: account, captcha_ok: true })
+    $('#faucetStatus').textContent = 'Ready';
+    return;
+  }
+  alert('Connection failed or cancelled.');
+}
+
+/* ========================
+   CLAIM FAUCET
+======================== */
+async function claimFaucet(){
+  if(!connectedAccount){
+    $('#claimMsg').textContent = 'Connect your wallet first.';
+    return;
+  }
+
+  // Skip captcha for now (you already approved)
+  $('#claimMsg').textContent = 'Claiming…';
+  $('#claimSpin').style.display = 'inline-block';
+
+  try{
+    const res = await fetch(CONFIG.FAUCET_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ account: connectedAccount, captcha_ok:true })
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json();
 
-    if (data && data.ok) {
-      if (msgEl) msgEl.textContent = '✅ Claimed 10 CFC successfully!';
-      try { await connectXRPLAndLoadBalances(account); } catch (_) {}
-      try { if (typeof regenCaptcha === 'function') regenCaptcha(); } catch (_) {}
-      try { if (typeof newCaptcha === 'function') newCaptcha(); } catch (_) {}  // moved here
+    if(data.ok){
+      $('#claimMsg').textContent = '✅ 10 CFC claimed!';
     } else {
-      if (msgEl) {
-        const err = (data && (data.error || data.message)) || '';
-        if (/invalid account/i.test(err)) msgEl.textContent = '';
-        else msgEl.textContent = '❌ ' + (err || 'Claim failed');
-      }
+      $('#claimMsg').textContent = '❌ ' + (data.error || 'Claim failed.');
     }
-  } catch (e) {
-    console.error('claim error', e);
-    if (msgEl) msgEl.textContent = 'Server error. Try again.';
-  } finally {
-    if (spin) spin.style.display = 'none';
+
+  }catch(e){
+    $('#claimMsg').textContent = 'Server error.';
   }
+
+  $('#claimSpin').style.display = 'none';
 }
 
+/* ========================
+   BUY WITH XRP
+======================== */
 async function buyWithXRP(item){
+  if(!connectedAccount){ alert('Connect wallet first'); return; }
 
-      const amountDrops = Math.round(Number(item.priceXRP) * 1_000_000).toString()
-      const tx = {
-        TransactionType: 'Payment',
-        Destination: CONFIG.RECEIVER_XRP,
-        Amount: amountDrops,
-        Memos: [{ Memo: { MemoType: strToHex('CFC-PURCHASE'), MemoData: strToHex(`${item.id}|XRP|${Date.now()}`) } }]
-      }
-      const payload = await xumm.payload.createAndSubscribe({ txjson: tx }, () => {})
-      if (payload?.created?.next) window.open(payload.created.next.always, '_blank')
-      const resolved = await payload.resolved
-      alert(resolved.signed ? 'Thanks! We received your order. We’ll deliver your NFT shortly.' : 'Payment was cancelled.')
-    }
-
-    async function buyWithRLUSD(item){
-  if (!connectedAccount){ alert('Connect your wallet first.'); return }
-  await ensureConnected()
-
-  const lines = await client.request({ command: 'account_lines', account: connectedAccount })
-  const rlUsdLine = lines.result.lines.find(l => l.account === CONFIG.RLUSD_ISSUER && l.currency === "RLUSD")
-  if (!rlUsdLine){ alert('You need an RLUSD trustline before paying.'); return }
-
-  const bal = parseFloat(rlUsdLine.balance || '0')
-  if (bal < parseFloat(item.priceRLUSD)){ alert('Insufficient RLUSD balance.'); return }
+  const amountDrops = (Number(item.priceXRP) * 1_000_000).toString();
 
   const tx = {
-    TransactionType: 'Payment',
-    Account: connectedAccount,
+    TransactionType:'Payment',
     Destination: CONFIG.RECEIVER_XRP,
-    Amount: { currency: "RLUSD", issuer: CONFIG.RLUSD_ISSUER, value: item.priceRLUSD },
-    Memos: [{ Memo: { MemoType: strToHex('RLUSD-PURCHASE'), MemoData: strToHex(`${item.id}|RLUSD|${Date.now()}`) } }]
-  }
+    Amount: amountDrops,
+    Memos:[{
+      Memo:{ MemoType:strToHex('CFC-PURCHASE'),
+             MemoData:strToHex(`${item.id}|XRP|${Date.now()}`) }
+    }]
+  };
 
-  const payload = await xumm.payload.createAndSubscribe({ txjson: tx }, () => {})
-  if (payload?.created?.next) window.open(payload.created.next.always, '_blank')
-  const resolved = await payload.resolved
-  alert(resolved.signed ? 'Thanks! We received your RLUSD payment 🎉' : 'Payment cancelled.')
+  const payload = await xumm.payload.createAndSubscribe({ txjson:tx }, ()=>{});
+  if(payload?.created?.next) window.open(payload.created.next.always,'_blank');
+
+  const res = await payload.resolved;
+  alert(res.signed?'Thank you!':'Cancelled.');
 }
 
-    function switchView(which){
-      document.getElementById('view-market').style.display = which==='market' ? 'block' : 'none'
-      document.getElementById('view-purchases').style.display = which==='purchases' ? 'block' : 'none'
-      document.getElementById('view-redeem').style.display = which==='redeem' ? 'block' : 'none'
-      document.getElementById('navMarket').classList.toggle('secondary', which!=='market')
-      document.getElementById('navPurchases').classList.toggle('secondary', which!=='purchases')
-      document.getElementById('navRedeem').classList.toggle('secondary', which!=='redeem')
-    }
+/* ========================
+   BUY WITH RLUSD
+======================== */
+async function buyWithRLUSD(item){
+  if(!connectedAccount){ alert('Connect wallet first'); return; }
 
-    document.getElementById('navMarket').addEventListener('click', () => switchView('market'))
-    document.getElementById('navPurchases').addEventListener('click', async () => { switchView('purchases'); await loadMyPurchases() })
-    document.getElementById('navRedeem').addEventListener('click', () => switchView('redeem'))
+  const c = await getClient();
+  const lines = await c.request({ command:'account_lines', account:connectedAccount });
+  const rl = lines.result.lines.find(
+    l => l.account===CONFIG.RLUSD_ISSUER && l.currency==='RLUSD'
+  );
 
-    function hexToString(hex){ try{ if (!hex) return ''; const clean = hex.startsWith('0x') ? hex.slice(2) : hex; return decodeURIComponent(clean.replace(/(..)/g,'%$1')) }catch(e){ return '' } }
+  if(!rl){ alert('You need an RLUSD trustline first.'); return; }
+  if(Number(rl.balance) < Number(item.priceRLUSD)){
+    alert('Not enough RLUSD.'); return;
+  }
 
-    async function loadMyPurchases(){
-      if (!connectedAccount){ document.getElementById('purchasesGrid').innerHTML = '<div class="muted">Connect your wallet to see purchases.</div>'; return }
-      await ensureConnected()
-      const resp = await client.request({ command:'account_nfts', account: connectedAccount })
-      const items = (resp.result.account_nfts||[]).filter(n => n.Issuer === CONFIG.CFC_ISSUER)
-      if (!items.length){ document.getElementById('purchasesGrid').innerHTML = '<div class="muted">No CFC-issued NFTs found in this wallet.</div>'; return }
-      const grid = items.map(n => {
-        const uri = hexToString(n.URI)
-        return `
-          <div class="card">
-            <div class="nft-img" style="display:flex;align-items:center;justify-content:center;color:#9fb0d1">Owned NFT</div>
-            <div class="kv"><div>Token ID</div><div style="word-break:break-all">${n.NFTokenID}</div></div>
-            <div class="kv"><div>Issuer</div><div>${n.Issuer}</div></div>
-            ${uri ? `<div class="kv"><div>Metadata</div><div><a href="${uri}" target="_blank" rel="noreferrer">Open</a></div></div>` : ''}
-            <div class="row" style="margin-top:10px">
-              <button class="btn small" onclick="document.getElementById('redeemTokenId').value='${n.NFTokenID}'; switchView('redeem');">Redeem</button>
-            </div>
-          </div>`
-      }).join('')
-      document.getElementById('purchasesGrid').innerHTML = grid
-    }
+  const tx = {
+    TransactionType:'Payment',
+    Account: connectedAccount,
+    Destination: CONFIG.RECEIVER_XRP,
+    Amount:{ currency:'RLUSD', issuer:CONFIG.RLUSD_ISSUER, value:item.priceRLUSD },
+    Memos:[{
+      Memo:{ MemoType:strToHex('RLUSD-PURCHASE'),
+             MemoData:strToHex(`${item.id}|RLUSD|${Date.now()}`) }
+    }]
+  };
 
-    document.getElementById('redeemCheck').addEventListener('click', async () => {
-      const id = document.getElementById('redeemTokenId').value.trim()
-      if (!id){ document.getElementById('redeemResult').textContent = 'Enter a Token ID.'; return }
-      if (!connectedAccount){ document.getElementById('redeemResult').textContent = 'Connect your wallet first.'; return }
-      await ensureConnected()
-      const resp = await client.request({ command:'account_nfts', account: connectedAccount })
-      const owned = (resp.result.account_nfts||[]).some(n => n.NFTokenID === id)
-      document.getElementById('redeemResult').textContent = owned ? '✅ Ownership verified. You can proceed to redeem this NFT.' : '❌ This wallet does not currently hold that Token ID.'
-    })
+  const payload = await xumm.payload.createAndSubscribe({ txjson:tx },()=>{});
+  if(payload?.created?.next) window.open(payload.created.next.always,'_blank');
 
-    document.getElementById('emailSubmit').addEventListener('click', () => {
-      const email = document.getElementById('emailInput').value.trim()
-      const box = document.getElementById('emailMsg')
-      if(!/.+@.+\..+/.test(email)){ box.textContent='Please enter a valid email.'; return }
-      const u = new URL(CONFIG.EMAIL_FALLBACK_URL); u.searchParams.set('email', email); window.open(u.toString(), '_blank')
-      box.textContent='Opening contact page…'
-    })
+  const res = await payload.resolved;
+  alert(res.signed?'Thank you!':'Cancelled.');
+}
 
-   document.getElementById('connectBtn').addEventListener('click', connectXaman)
-document.getElementById('buy1rlusd').addEventListener('click', () => buyWithRLUSD(CONFIG.ITEMS[0]))
-document.getElementById('buy2rlusd').addEventListener('click', () => buyWithRLUSD(CONFIG.ITEMS[1]))
-document.getElementById('buy3rlusd').addEventListener('click', () => buyWithRLUSD(CONFIG.ITEMS[2]))
-document.getElementById('buy1xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[0]))
-document.getElementById('buy2xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[1]))
-document.getElementById('buy3xrp').addEventListener('click', () => buyWithXRP(CONFIG.ITEMS[2]))
-document.getElementById('claimBtn').addEventListener('click', claimFaucet)
+/* ========================
+   VIEW SWITCHING
+======================== */
+function switchView(which){
+  $('#view-market').style.display = which==='market'?'block':'none';
+  $('#view-purchases').style.display = which==='purchases'?'block':'none';
+  $('#view-redeem').style.display = which==='redeem'?'block':'none';
+}
 
-switchView('market')
+/* ========================
+   BIND EVENTS
+======================== */
+$('#connectBtn').addEventListener('click', connectXaman);
+$('#claimBtn').addEventListener('click', claimFaucet);
 
-  </script>
+$('#buy1rlusd').addEventListener('click',()=>buyWithRLUSD(CONFIG.ITEMS[0]));
+$('#buy2rlusd').addEventListener('click',()=>buyWithRLUSD(CONFIG.ITEMS[1]));
+$('#buy3rlusd').addEventListener('click',()=>buyWithRLUSD(CONFIG.ITEMS[2]));
+
+$('#buy1xrp').addEventListener('click',()=>buyWithXRP(CONFIG.ITEMS[0]));
+$('#buy2xrp').addEventListener('click',()=>buyWithXRP(CONFIG.ITEMS[1]));
+$('#buy3xrp').addEventListener('click',()=>buyWithXRP(CONFIG.ITEMS[2]));
+
+switchView('market');
+</script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   try {
