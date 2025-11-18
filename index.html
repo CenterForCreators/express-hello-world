@@ -1,17 +1,16 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-  <!-- Xumm & XRPL SDKs -->
-  <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
-
-  <!-- Initialize XRPL Client -->
-  <script>
+<!-- Xumm & XRPL SDKs -->
+<script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/3.2.0/xrpl-latest-min.js"></script>
+<!-- Initialize XRPL Client -->
+<script>
     const client = new xrpl.Client('wss://s1.ripple.com');
   </script>
-
-  <!-- BUILD TAG: CFC-OK -->
-  <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
+<!-- BUILD TAG: CFC-OK -->
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Center for Creators — CFC on XRPL</title>
 <meta content="Center for Creators NFT site — Faucet + Marketplace powered by CFC on XRPL." name="description"/>
 <!-- Render-hosted SDKs (so gateways don't block) -->
@@ -74,17 +73,13 @@
 <style>
   .server-waiting-url{ display:none !important; }
 </style>
-
 </head>
 <body>
 <div class="wrap">
 <header>
-<div class="brand">
-</div>
-<button class="btn" id="connectBtn" onclick="try{ if(window.connect){connect()} else if(window.xumm){xumm.authorize()} }catch(e){}"><span id="addrBadge" style="margin-left:8px;opacity:0.9"></span>Connect Xaman Wallet</button><div id="emailInput" ...>
 
-    
-</header>
+<button class="btn" id="connectBtn" onclick="try{ if(window.connect){connect()} else if(window.xumm){xumm.authorize()} }catch(e){}"><span id="addrBadge" style="margin-left:8px;opacity:0.9"></span>Connect Xaman Wallet</button><div ...="" id="emailInput">
+</div></header>
 <!-- Injected: row (account + balances) -->
 <style>
   .walletbar{display:flex;gap:14px;align-items:center;margin:10px 0;padding:10px 12px;border:1px solid #202c45;border-radius:12px;background:#0f1729}
@@ -97,7 +92,6 @@
 <span class="muted">CFC:</span><span id="wb_cfc">—</span>
 <button class="btn small" id="wb_trust" style="display:none" type="button">Add CFC Trustline</button>
 <span id="connectedAddress">Not connected</span></div>
- 
 <div class="card" id="faucetCard" style="margin-bottom:16px">
 <div class="row" style="justify-content:space-between">
 <div>
@@ -114,107 +108,89 @@
 <button class="btn small" onclick="if(window.regenCaptcha)window.regenCaptcha()" type="button">↻</button>
 </div>
 <button class="btn" id="claimBtn">Claim CFC</button>
-
 <div class="spinner" id="claimSpin" style="display:none"></div>
 <div class="status" id="claimStatus"></div>
 </div>
 <div class="muted" id="claimMsg" style="margin-top:8px"></div>
 </div>
-
-
 <div class="divider"></div>
 <!-- Tokenization Header Section -->
 <div class="nft-header" style="text-align:center; margin:25px 0;">
-  <h1 style="font-size:28px; font-weight:800; color:#fff; margin-bottom:8px;">
+<h1 style="font-size:28px; font-weight:800; color:#fff; margin-bottom:8px;">
     Tokenization That Empowers Your Purpose
   </h1>
-  <p style="color:#9fb0d1; font-size:17px; max-width:650px; margin:0 auto;">
+<p style="color:#9fb0d1; font-size:17px; max-width:650px; margin:0 auto;">
     From personal growth to blockchain strategy, every experience on Center for Creators 
     helps you learn, evolve, and earn CFC rewards.
   </p>
 </div>
-
 <div class="row" style="margin-bottom:12px">
 <button class="btn" id="navMarket">Marketplace</button>
 <button class="btn secondary" id="navPurchases">My Purchases</button>
 <button class="btn secondary" id="navRedeem">Redeem</button>
 </div>
-
 <section id="view-market">
-  <div class="grid">
-
-    <!-- Service NFT -->
-    <div class="card">
-      <img alt="Service NFT image" class="nft-img" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='576' viewBox='0 0 1024 576'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%237c3aed'/%3E%3Cstop offset='100%25' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1024' height='576' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='60' font-weight='700' fill='%23fff'%3EService NFT — 1:1 Session%3C/text%3E%3C/svg%3E"/>
-
-      <h3 style="margin:12px 0 6px">Unlock a 60-minute session with Christie Russ.</h3>
-      <div class="muted" style="margin-bottom:12px">Learn and Earn. Proof of ownership on XRPL. Transferable prior to redemption.</div>
-
-      <div class="row" style="justify-content:space-between">
-        <div class="price-col">
-          <div class="muted">Price</div>
-          <div id="price1rlusd"><strong>500 RLUSD</strong></div>
-          <div class="muted">·</div>
-          <div id="price1xrp"><strong>219 XRP</strong></div>
-        </div>
-        <div class="row">
-          <button class="btn small" id="buy1rlusd">Pay in RLUSD</button>
-          <button class="btn small secondary" id="buy1xrp">Pay in XRP</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Blockchain Made Simple NFT -->
-    <div class="card">
-      <img alt="Blockchain Made Simple NFT" class="nft-img" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='576' viewBox='0 0 1024 576'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2316a34a'/%3E%3Cstop offset='100%25' stop-color='%2384cc16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1024' height='576' fill='url(%23g)'/%3E%3Ctext x='50%25' y='46%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='60' font-weight='700' fill='%23fff'%3EBlockchain Made Simple NFT%3C/text%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='56' font-weight='600' fill='%23fff'%3EAmazon %231 Best Seller%3C/text%3E%3C/svg%3E" />
-
-      <h3 style="margin:12px 0 6px">Blockchain Made Simple NFT</h3>
-      <div class="muted" style="margin-bottom:12px">Read and Earn CFC Tokens. Limited edition NFT Book linked to bonus content.</div>
-
-      <div class="row" style="justify-content:space-between">
-        <div class="price-col">
-          <div class="muted">Price</div>
-          <div id="price2rlusd"><strong>35 RLUSD</strong></div>
-          <div class="muted">·</div>
-          <div id="price2xrp"><strong>35 XRP</strong></div>
-        </div>
-        <div class="row">
-          <button class="btn small" id="buy2rlusd">Pay in RLUSD</button>
-          <button class="btn small secondary" id="buy2xrp">Pay in XRP</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- The Power to Rise NFT -->
-    <div class="card">
-      <img alt="The Power to Rise NFT" class="nft-img" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='576' viewBox='0 0 1024 576'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23f59e0b'/%3E%3Cstop offset='100%25' stop-color='%23f97316'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1024' height='576' fill='url(%23g)'/%3E%3Ctext x='50%25' y='45%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='60' font-weight='700' fill='%23fff'%3EThe Power to Rise NFT%3C/text%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='56' font-weight='600' fill='%23fff'%3EAmazon %231 Best Seller%3C/text%3E%3C/svg%3E" />
-
-      <h3 style="margin:12px 0 6px">The Power to Rise NFT</h3>
-      <div class="muted" style="margin-bottom:12px">Read and Earn CFC Tokens. Limited edition NFT Book linked to bonus content.</div>
-
-      <div class="row" style="justify-content:space-between">
-        <div class="price-col">
-          <div class="muted">Price</div>
-          <div id="price3rlusd"><strong>25 RLUSD</strong></div>
-          <div class="muted">·</div>
-          <div id="price3xrp"><strong>11 XRP</strong></div>
-        </div>
-        <div class="row">
-          <button class="btn small" id="buy3rlusd">Pay in RLUSD</button>
-          <button class="btn small secondary" id="buy3xrp">Pay in XRP</button>
-        </div>
-      </div>
-    </div>
-
-  </div> <!-- ✅ closes the grid -->
+<div class="grid">
+<!-- Service NFT -->
+<div class="card">
+<img alt="Service NFT image" class="nft-img" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='576' viewBox='0 0 1024 576'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%237c3aed'/%3E%3Cstop offset='100%25' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1024' height='576' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='60' font-weight='700' fill='%23fff'%3EService NFT — 1:1 Session%3C/text%3E%3C/svg%3E"/>
+<h3 style="margin:12px 0 6px">Unlock a 60-minute session with Christie Russ.</h3>
+<div class="muted" style="margin-bottom:12px">Learn and Earn. Proof of ownership on XRPL. Transferable prior to redemption.</div>
+<div class="row" style="justify-content:space-between">
+<div class="price-col">
+<div class="muted">Price</div>
+<div id="price1rlusd"><strong>500 RLUSD</strong></div>
+<div class="muted">·</div>
+<div id="price1xrp"><strong>219 XRP</strong></div>
+</div>
+<div class="row">
+<button class="btn small" id="buy1rlusd">Pay in RLUSD</button>
+<button class="btn small secondary" id="buy1xrp">Pay in XRP</button>
+</div>
+</div>
+</div>
+<!-- Blockchain Made Simple NFT -->
+<div class="card">
+<img alt="Blockchain Made Simple NFT" class="nft-img" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='576' viewBox='0 0 1024 576'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2316a34a'/%3E%3Cstop offset='100%25' stop-color='%2384cc16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1024' height='576' fill='url(%23g)'/%3E%3Ctext x='50%25' y='46%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='60' font-weight='700' fill='%23fff'%3EBlockchain Made Simple NFT%3C/text%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='56' font-weight='600' fill='%23fff'%3EAmazon %231 Best Seller%3C/text%3E%3C/svg%3E"/>
+<h3 style="margin:12px 0 6px">Blockchain Made Simple NFT</h3>
+<div class="muted" style="margin-bottom:12px">Read and Earn CFC Tokens. Limited edition NFT Book linked to bonus content.</div>
+<div class="row" style="justify-content:space-between">
+<div class="price-col">
+<div class="muted">Price</div>
+<div id="price2rlusd"><strong>35 RLUSD</strong></div>
+<div class="muted">·</div>
+<div id="price2xrp"><strong>35 XRP</strong></div>
+</div>
+<div class="row">
+<button class="btn small" id="buy2rlusd">Pay in RLUSD</button>
+<button class="btn small secondary" id="buy2xrp">Pay in XRP</button>
+</div>
+</div>
+</div>
+<!-- The Power to Rise NFT -->
+<div class="card">
+<img alt="The Power to Rise NFT" class="nft-img" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='576' viewBox='0 0 1024 576'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23f59e0b'/%3E%3Cstop offset='100%25' stop-color='%23f97316'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1024' height='576' fill='url(%23g)'/%3E%3Ctext x='50%25' y='45%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='60' font-weight='700' fill='%23fff'%3EThe Power to Rise NFT%3C/text%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter,Segoe UI,Arial,sans-serif' font-size='56' font-weight='600' fill='%23fff'%3EAmazon %231 Best Seller%3C/text%3E%3C/svg%3E"/>
+<h3 style="margin:12px 0 6px">The Power to Rise NFT</h3>
+<div class="muted" style="margin-bottom:12px">Read and Earn CFC Tokens. Limited edition NFT Book linked to bonus content.</div>
+<div class="row" style="justify-content:space-between">
+<div class="price-col">
+<div class="muted">Price</div>
+<div id="price3rlusd"><strong>25 RLUSD</strong></div>
+<div class="muted">·</div>
+<div id="price3xrp"><strong>11 XRP</strong></div>
+</div>
+<div class="row">
+<button class="btn small" id="buy3rlusd">Pay in RLUSD</button>
+<button class="btn small secondary" id="buy3xrp">Pay in XRP</button>
+</div>
+</div>
+</div>
+</div> <!-- ✅ closes the grid -->
 </section>
-
 <section id="view-purchases" style="display:none">
-
 <div class="grid" id="purchasesGrid"></div>
 </section>
 <section id="view-redeem" style="display:none">
-
 </section>
 <footer>
 <p>Powered by the CFC Token on the XRP Ledger. Secured by Xaman • App: Center for Creators NFT Market. <a href="https://centerforcreators.com" rel="noreferrer" target="_blank">CenterForCreators.com</a></p>
@@ -545,7 +521,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
 <script>
 // Simple math CAPTCHA: digits 0–9, refresh each time
 let _a = 0, _b = 0;
@@ -581,7 +556,7 @@ function checkCaptcha(){
   const I = document.getElementById('captchaInput');
   if (!I) return true; // if no UI, skip
   const val = parseInt(I.value,10);
-  return !isNaN(val) && (val === (_a + _b));
+  return !isNaN(val) &amp;&amp; (val === (_a + _b));
 }
 // Initialize captcha when faucet view is shown
 (function(){
@@ -591,7 +566,7 @@ function checkCaptcha(){
   });
   window.addEventListener('hashchange', function(){ try { newCaptcha(); } catch(e){} });
 })();
-</script>
+
 <script>
 (function(){
   // Math captcha
@@ -749,17 +724,7 @@ try {
       });
     })();
   </script>
-<section class="card" id="join">
-<h2>Join the list</h2>
-<p class="muted">Get updates from CenterForCreators.com</p>
-<div style="max-width:420px">
-<form class="row" id="joinForm" onsubmit="return false;">
-<input id="joinEmail" placeholder="you@example.com" required="" type="email"/>
-<button class="btn" id="joinBtn" type="submit">Join</button>
-</form>
-<div class="status" id="joinStatus"></div>
-</div>
-</section>
+
 <script>
 (function(){
   function gid(id){ return document.getElementById(id); }
@@ -1474,7 +1439,6 @@ try {
   if (cbtn) cbtn.addEventListener('click', (e)=>{ e.preventDefault(); claim(); });
 })();
 </script>
-
 <!-- Injected: targeted fixes overlay -->
 <script>
 (function(){
@@ -1706,7 +1670,6 @@ function cleanTexts(){
   });
 }
 </script>
-
 <!-- bootstrap: join + claim + divider (non-destructive) -->
 <script>
 (function(){
@@ -1865,7 +1828,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
-
 <!-- This block was showing as text; it MUST live inside <script> -->
 <script>
 try {
@@ -1880,7 +1842,6 @@ try {
   if (spin){ spin.style.display='none'; }
 }
 </script>
-
 <script>
 (function(){
   function create(tag, attrs){
@@ -2009,6 +1970,7 @@ try {
     }
   });
 </script>
-
 </body> 
 </html>
+
+
