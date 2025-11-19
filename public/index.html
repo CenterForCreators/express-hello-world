@@ -295,21 +295,6 @@
 
     switchView('market');
 
-    const data = await res.json();
-
-    if(data.ok){
-      $('#claimMsg').textContent = '✅ 10 CFC claimed!';
-    } else {
-      $('#claimMsg').textContent = '❌ ' + (data.error || 'Claim failed.');
-    }
-
-  }catch(e){
-    $('#claimMsg').textContent = 'Server error.';
-  }
-
-  $('#claimSpin').style.display = 'none';
-}
-
 /* ========================
    BUY WITH XRP
 ======================== */
