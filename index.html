@@ -256,6 +256,11 @@ msg; b.style.display='block' }
       if(res.signed){ setStatus('Trustline added. Refreshing balances…'); await fetchBalances(connectedAccount) }
       else{ alert('Trustline request was cancelled.') }
     }
+// Force full-page mode (fixes iPhone/Xaman)
+if (window !== window.top) {
+  window.top.location.href = window.location.href;
+  return;
+}
 
     async function connectXaman(){
       hideError(); setStatus('Connecting…')
@@ -1057,10 +1062,16 @@ try {
 
   if(connectBtn){
     connectBtn.addEventListener('click', function(){
-      // If already connected, do nothing
-      if(connectedAccount){ return; }
-      connectXumm();
-    });
+
+  // FIX: iPhone/Xaman redirect issue
+  if (window !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+
+  if(connectedAccount){ return; }
+  connectXumm();
+});
   }
 
   // Provide a global for other handlers (Claim) to know connection
@@ -1972,3 +1983,5 @@ try {
 </script>
 </body> 
 </html>
+
+
