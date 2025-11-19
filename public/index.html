@@ -37,29 +37,36 @@
     .captcha .tag{background:#1a2745;color:#cfe3ff;padding:4px 8px;border-radius:999px;font-size:12px}
     .note{font-size:12px;color:#9fb0d1;margin-top:6px}
   </style>
-
-<!-- ------- CLEAN CONFIG ------- -->
+<!-- ======================
+     CONFIG (single source)
+     ====================== -->
 <script>
-window.CONFIG = {
-  FAUCET_ENDPOINT: "https://cfc-faucet.onrender.com/api/faucet",
-  faucetAmount: 10,
-  currencyCode: "CFC",
-  issuer: "rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8"
+const CONFIG = {
+  networkWss: 'wss://xrplcluster.com',
+  CFC_ISSUER: 'rsxUkmjnAn8PRDz8RYrPusb9mTDYn5NqG8',
+  CFC_CODE: 'CFC',
+  RLUSD_ISSUER: 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De',
+  XUMM_API_KEY: 'eebd4c17-c3ef-435b-b891-89afb99e259e',
+  RECEIVER_XRP: 'rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd',
+  FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
+  ITEMS: [
+    { id:'svc1', name:'Private Strategy Session', priceRLUSD:'500', priceXRP:'219' },
+    { id:'wrk1', name:'Blockchain Made Simple — Book', priceRLUSD:'35', priceXRP:'15' },
+    { id:'book1', name:'The Power to Rise — Book', priceRLUSD:'25', priceXRP:'11' }
+  ]
 };
-</script>
 
-<!-- ------- BASIC HELPERS ------- -->
-<script>
-function $(sel){ return document.querySelector(sel); }
-function show(el){ el.style.display='block'; }
-function hide(el){ el.style.display='none'; }
-function toast(msg){
-  const t = $('#toast');
-  t.textContent = msg;
-  show(t);
-  setTimeout(()=>hide(t), 3500);
+// Basic helpers
+function $(s){ return document.querySelector(s); }
+function strToHex(str){
+  return Array.from(new TextEncoder().encode(str))
+    .map(b => b.toString(16).padStart(2,'0'))
+    .join('')
+    .toUpperCase();
 }
 </script>
+
+
 
 </head>
 <body>
