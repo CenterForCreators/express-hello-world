@@ -1987,5 +1987,15 @@ try {
     }
   });
 </script>
+<!-- Auto-height for GoDaddy iframe -->
+<script>
+function sendHeight() {
+    const height = document.body.scrollHeight;
+    window.parent.postMessage({ cfcHeight: height }, "*");
+}
+setInterval(sendHeight, 500);
+window.onload = sendHeight;
+</script>
+
 </body> 
 </html>
