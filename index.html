@@ -1996,6 +1996,32 @@ function sendHeight() {
 setInterval(sendHeight, 500);
 window.onload = sendHeight;
 </script>
+<style>
+/* Increase main text slightly */
+html, body {
+  font-size: 18px !important;
+}
+
+/* Make ONLY regular buttons larger */
+.btn:not(.small) {
+  padding: 14px 20px !important;
+  font-size: 18px !important;
+}
+
+/* Keep small buttons the same size */
+.btn.small {
+  padding: 8px 10px !important;
+  font-size: 14px !important;
+}
+
+/* Make headers larger */
+h1 {
+  font-size: 32px !important;
+}
+h3 {
+  font-size: 22px !important;
+}
+</style>
 
 </body> 
 </html>
