@@ -212,7 +212,7 @@
   EMAIL_FALLBACK_URL: 'https://centerforcreators.com/contact',
   RECEIVER_XRP: 'rU15yYD3cHmNXGxHJSJGoLUSogxZ17FpKd',
   FAUCET_ENDPOINT: 'https://cfc-faucet.onrender.com/api/faucet',
-  FAUCET_DAILY_AMOUNT: '10',
+  FAUCET_DAILY_AMOUNT: '25',
   ITEMS: [
     { id: 'svc1', name: 'Private Strategy Session', priceRLUSD: '500', priceXRP: '219' },
     { id: 'wrk1', name: 'Blockchain Made Simple — Special Edition Book', priceRLUSD: '35', priceXRP: '15'  },
@@ -607,12 +607,12 @@ function checkCaptcha(){
     var acctEl=document.getElementById('acct');
     var acct=acctEl?acctEl.textContent:'';
     if(!acct || acct==='Not connected'){ alert('Connect wallet first.'); return; }
-    var I=document.getElementById('capAns'); var v=parseInt(I?I.value:'',10);
+    var I=document.getElementById('capAns'); var v=parseInt(I?I.value:'',25);
     if(isNaN(v)||v!==(_a+_b)){ alert('Wrong answer, try again.'); regenCaptcha(); return; }
     try{
       const r=await fetch((CONFIG && CONFIG.USE_CORS_PROXY ? (CONFIG.CORS_PROXY + 'https://cfc-faucet.onrender.com/api/faucet') : 'https://cfc-faucet.onrender.com/api/faucet'),{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ address: acct, amount: 10, currency: 'CFC' })
+        body: JSON.stringify({ address: acct, amount: 25, currency: 'CFC' })
       });
       if(!r.ok) throw new Error('Faucet error');
       alert('✅ 25 CFC sent!');
@@ -1357,7 +1357,7 @@ try {
         throw new Error(t || 'Faucet failed');
       }
       const data = await res.json().catch(()=>({}));
-      setStatus('Faucet sent: 10 CFC. Check your wallet.');
+      setStatus('Faucet sent: 25 CFC. Check your wallet.');
       // Refresh balances after a short delay
       setTimeout(() => refreshBalances(connectedAccount), 1500);
     } catch (e) {
@@ -1783,7 +1783,7 @@ function cleanTexts(){
 
       if (status){
         if (j && j.ok){
-          var amt = (window.CONFIG && (CONFIG.faucetAmount || CONFIG.FAUCET_DAILY_AMOUNT)) || 10;
+          var amt = (window.CONFIG && (CONFIG.faucetAmount || CONFIG.FAUCET_DAILY_AMOUNT)) || 25;
           var code = (window.CONFIG && (CONFIG.currencyCode || CONFIG.CFC_CODE)) || 'CFC';
           status.className='status ok';
           status.textContent='✅ ' + amt + ' ' + code + ' sent!';
