@@ -607,7 +607,7 @@ function checkCaptcha(){
     var acctEl=document.getElementById('acct');
     var acct=acctEl?acctEl.textContent:'';
     if(!acct || acct==='Not connected'){ alert('Connect wallet first.'); return; }
-    var I=document.getElementById('capAns'); var v=parseInt(I?I.value:'',25);
+    var I=document.getElementById('capAns'); var v=parseInt(I?I.value:'', 10);
     if(isNaN(v)||v!==(_a+_b)){ alert('Wrong answer, try again.'); regenCaptcha(); return; }
     try{
       const r=await fetch((CONFIG && CONFIG.USE_CORS_PROXY ? (CONFIG.CORS_PROXY + 'https://cfc-faucet.onrender.com/api/faucet') : 'https://cfc-faucet.onrender.com/api/faucet'),{
