@@ -208,7 +208,7 @@ app.post("/api/faucet", async (req, res) => {
     const issuer = process.env.ISSUER_CLASSIC || process.env.CFC_ISSUER;
     const seed = process.env.ISSUER_SEED || process.env.FAUCET_SEED;
     const currency = process.env.CFC_CURRENCY || "CFC";
-    const value = String(process.env.AMOUNT_CFC || "10");
+    const value = String(process.env.AMOUNT_CFC || "25");
 
     if (!issuer || !seed)
       return res.status(500).json({ ok: false, error: "Server faucet not configured" });
