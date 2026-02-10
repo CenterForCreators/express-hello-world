@@ -189,7 +189,6 @@ app.post('/api/join', async (req, res) => {
 /* -------------------------------------------------
    CFC FAUCET
 ---------------------------------------------------*/
-const grants = new Map();
 
 app.post("/api/faucet", async (req, res) => {
   try {
@@ -200,10 +199,20 @@ app.post("/api/faucet", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Invalid account" });
     }
 
-    const last = grants.get(account) || 0;
-    const now = Date.now();
-    if (now - last < 86400000)
-      return res.status(429).json({ ok: false, error: "Faucet already claimed (24h limit)" });
+   const { rows } = await client.query(
+  "SELECT last_claim_at FROM faucet_claims WHERE wallet = $1",
+  [account]
+);
+
+if (rows.length) {
+  const last = new Date(rows[0].last_claim_at).getTime();
+  if (Date.now() - last < 86400000) {
+    return res.status(429).json({
+      ok: false,
+      error: "Faucet already claimed (24h limit)"
+    });
+  }
+}
 
     const issuer = process.env.ISSUER_CLASSIC || process.env.CFC_ISSUER;
     const seed = process.env.ISSUER_SEED || process.env.FAUCET_SEED;
@@ -248,7 +257,16 @@ app.post("/api/faucet", async (req, res) => {
     await client.disconnect();
 
     if (result.result?.meta?.TransactionResult === "tesSUCCESS") {
-      grants.set(account, now);
+     await client.query(
+  `
+  INSERT INTO faucet_claims (wallet, last_claim_at)
+  VALUES ($1, NOW())
+  ON CONFLICT (wallet)
+  DO UPDATE SET last_claim_at = NOW()
+  `,
+  [account]
+);
+
       return res.json({ ok: true, hash: result.result?.tx_json?.hash });
     } else {
       return res.status(500).json({
