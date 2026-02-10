@@ -490,6 +490,7 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 <style>
+    #cfc-cap-ovl { display: none !important; }
 #cfc-cap-ovl{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:9999}
 #cfc-cap-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#121a2b;color:#f6f8ff;
   border:1px solid #202c45;border-radius:14px;padding:16px;min-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
@@ -518,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(A) A.textContent=__cfcA; if(B) B.textContent=__cfcB; if(I) I.value='';
     var E=document.getElementById('cfc-cap-err'); if(E) E.textContent='';
   }
-  window.cfcOpenCaptcha = function(){ var o=document.getElementById('cfc-cap-ovl'); if(o){ regen(); o.style.display='block'; } };
+ window.cfcOpenCaptcha = function(){ return; };
   function hide(){ var o=document.getElementById('cfc-cap-ovl'); if(o) o.style.display='none'; }
 
   document.addEventListener('DOMContentLoaded', function(){
