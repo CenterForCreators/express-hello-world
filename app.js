@@ -340,6 +340,65 @@ app.post("/api/claim-nft-reward", async (req, res) => {
     res.status(500).json({ ok: false, error: "Claim failed" });
   }
 });
+app.post("/api/claim-nft-reward", async (req, res) => {
+  try {
+    const { wallet, submission_id } = req.body || {};
+
+    if (!wallet || !submission_id) {
+      return res.status(400).json({ ok: false, error: "Missing wallet or submission_id" });
+    }
+
+    // one-time claim check
+    const { rows } = await client.query(
+      `SELECT 1 FROM nft_reward_claims WHERE wallet=$1 AND submission_id=$2`,
+      [wallet, submission_id]
+    );
+
+    if (rows.length) {
+      return res.status(403).json({ ok: false, error: "Reward already claimed" });
+    }
+
+    // send 100 CFC (same mechanism as faucet)
+    const issuer = process.env.CFC_ISSUER;
+    const seed = process.env.FAUCET_SEED;
+    const currency = process.env.CFC_CURRENCY || "CFC";
+
+    const xrplClient = new xrpl.Client(process.env.RIPPLED_URL || "wss://s1.ripple.com");
+    await xrplClient.connect();
+
+    const faucetWallet = xrpl.Wallet.fromSeed(seed);
+
+    const tx = {
+      TransactionType: "Payment",
+      Account: faucetWallet.address,
+      Destination: wallet,
+      Amount: { currency, issuer, value: "100" }
+    };
+
+    const filled = await xrplClient.autofill(tx);
+    const signed = faucetWallet.sign(filled);
+    const result = await xrplClient.submitAndWait(signed.tx_blob);
+
+    await xrplClient.disconnect();
+
+    if (result.result.meta.TransactionResult !== "tesSUCCESS") {
+      return res.status(500).json({ ok: false, error: "XRPL payment failed" });
+    }
+
+    // mark claimed
+    await client.query(
+      `INSERT INTO nft_reward_claims (wallet, submission_id, claimed_at)
+       VALUES ($1,$2,NOW())`,
+      [wallet, submission_id]
+    );
+
+    res.json({ ok: true });
+
+  } catch (e) {
+    console.error("claim-nft-reward error:", e);
+    res.status(500).json({ ok: false, error: "Claim failed" });
+  }
+});
 
 /* -------------------------------------------------
    4) CATCH-ALL ROUTE — MUST NOT BLOCK /sdk
