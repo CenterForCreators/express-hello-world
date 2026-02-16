@@ -185,6 +185,34 @@ app.post('/api/join', async (req, res) => {
     return res.status(500).json({ ok: false, error: "Google Sheets error" });
   }
 });
+app.post("/api/claim-nft-reward", async (req, res) => {
+  try {
+    const { wallet, submission_id, return_to } = req.body || {};
+
+    if (!wallet || !submission_id) {
+      return res.status(400).json({ ok: false, error: "Missing wallet or submission_id" });
+    }
+
+    const payload = await createXummPayload({
+      txjson: { TransactionType: "SignIn" },
+      custom_meta: {
+        blob: JSON.stringify({
+          action: "claim_nft_reward",
+          wallet,
+          submission_id
+        })
+      },
+      options: {
+        return_url: { web: return_to || "https://centerforcreators.com/nft-marketplace" }
+      }
+    });
+
+    return res.json({ ok: true, link: payload });
+  } catch (e) {
+    console.error("claim-nft-reward error:", e);
+    return res.status(500).json({ ok: false, error: "Failed to create claim payload" });
+  }
+});
 
 /* -------------------------------------------------
    CFC FAUCET
