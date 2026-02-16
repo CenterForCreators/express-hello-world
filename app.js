@@ -279,6 +279,67 @@ if (rows.length) {
     return res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
+app.post("/api/claim-nft-reward", async (req, res) => {
+  try {
+    const { wallet, submission_id, return_url } = req.body;
+
+    if (!wallet || !submission_id)
+      return res.status(400).json({ ok: false, error: "Missing data" });
+
+    // 1️⃣ Check already claimed
+    const { rows } = await client.query(
+      "SELECT 1 FROM nft_reward_claims WHERE wallet=$1 AND submission_id=$2",
+      [wallet, submission_id]
+    );
+
+    if (rows.length) {
+      return res.status(409).json({ ok: false, error: "Already claimed" });
+    }
+
+    // 2️⃣ Send 100 CFC (reuse faucet logic safely)
+    const issuer = process.env.CFC_ISSUER;
+    const seed = process.env.FAUCET_SEED;
+    const currency = "CFC";
+    const value = "100";
+
+    const xrplClient = new xrpl.Client("wss://s1.ripple.com");
+    await xrplClient.connect();
+
+    const faucetWallet = xrpl.Wallet.fromSeed(seed);
+
+    const tx = {
+      TransactionType: "Payment",
+      Account: faucetWallet.classicAddress,
+      Destination: wallet,
+      Amount: { currency, issuer, value }
+    };
+
+    const prepared = await xrplClient.autofill(tx);
+    const signed = faucetWallet.sign(prepared);
+    const result = await xrplClient.submitAndWait(signed.tx_blob);
+
+    await xrplClient.disconnect();
+
+    if (result.result.meta.TransactionResult !== "tesSUCCESS") {
+      throw new Error("XRPL payment failed");
+    }
+
+    // 3️⃣ Record claim
+    await client.query(
+      "INSERT INTO nft_reward_claims (wallet, submission_id) VALUES ($1,$2)",
+      [wallet, submission_id]
+    );
+
+    res.json({
+      ok: true,
+      return_url
+    });
+
+  } catch (e) {
+    console.error("claim-nft-reward error:", e);
+    res.status(500).json({ ok: false, error: "Claim failed" });
+  }
+});
 
 /* -------------------------------------------------
    4) CATCH-ALL ROUTE — MUST NOT BLOCK /sdk
