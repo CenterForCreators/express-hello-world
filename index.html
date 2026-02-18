@@ -263,11 +263,6 @@ msg; b.style.display='block' }
       if(res.signed){ setStatus('Trustline added. Refreshing balances…'); await fetchBalances(connectedAccount) }
       else{ alert('Trustline request was cancelled.') }
     }
-// Force full-page mode (fixes iPhone/Xaman)
-if (window !== window.top) {
-  window.top.location.href = window.location.href;
-  return;
-}
     }
 
    function strToHex(str) {
