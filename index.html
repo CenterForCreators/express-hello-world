@@ -987,12 +987,6 @@ try {
   if(connectBtn){
     connectBtn.addEventListener('click', function(){
 
-  // FIX: iPhone/Xaman redirect issue
-  if (window !== window.top) {
-    window.top.location.href = window.location.href;
-    return;
-  }
-
   if(connectedAccount){ return; }
   connectXumm();
 });
