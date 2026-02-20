@@ -600,22 +600,6 @@ function checkCaptcha(){
 })();
 </script>
 <script>
-(function(){
-  function alias(from, to){
-    try{
-      if (typeof window[from]==='function' && typeof window[to] !== 'function'){ window[to]=window[from]; }
-      else if (typeof window[to]==='function' && typeof window[from] !== 'function'){ window[from]=window[to]; }
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded', function(){
-    alias('onConnect','connectWallet');
-    alias('onClaim','handleClaim');
-    var cb=document.getElementById('connectBtn'); if(cb && !cb.onclick) cb.onclick = (window.connectWallet||window.onConnect);
-    var cl=document.getElementById('claimBtn');   if(cl && !cl.onclick) cl.onclick   = (window.handleClaim||window.onClaim);
-  });
-})();
-</script>
-<script>
     // Unified pay functions (server redirect via your Render backend)
     function payRLUSD(){ window.open('https://cfc-faucet.onrender.com/api/pay-rlusd','_blank'); }
     function payXRP(){ window.open('https://cfc-faucet.onrender.com/api/pay-xrp','_blank'); }
@@ -912,9 +896,6 @@ x.payload.createAndSubscribe(
   }
 
 });
-
-        if (s && s.me && s.me.account){
-          connectedAccount = s.me.account;
           var cs = byId('connStatus'); if(cs) cs.textContent='Connected';
           var ac = byId('acct'); if(ac) ac.textContent=connectedAccount;
           refreshBalances();
@@ -923,7 +904,6 @@ x.payload.createAndSubscribe(
     }catch(e){ console.error(e); }
   }
   var btn = document.getElementById('connectBtn');
-  if(btn){ btn.addEventListener('click', connectXaman); }
 
   // XRPL read balances
   var xrplClient = null;
