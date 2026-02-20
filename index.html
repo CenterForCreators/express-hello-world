@@ -1862,6 +1862,15 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 });
 </script>
+if (window.top !== window.self) {
+  window.addEventListener("focus", function(){
+    try {
+      if (localStorage.getItem("xummAccount")) {
+        window.top.location.href = "https://centerforcreators.com/nft-marketplace";
+      }
+    } catch(e){}
+  });
+}
 
 </body> 
 </html>
