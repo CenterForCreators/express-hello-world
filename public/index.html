@@ -77,8 +77,12 @@
 <body>
 <div class="wrap">
 <header>
+<button class="btn" id="connectBtn">
+  <span id="addrBadge" style="margin-left:8px;opacity:0.9"></span>
+  Connect Xaman Wallet
+</button>
 
-<button class="btn" id="connectBtn" onclick="try{ if(window.connect){connect()} else if(window.xumm){xumm.authorize()} }catch(e){}"><span id="addrBadge" style="margin-left:8px;opacity:0.9"></span>Connect Xaman Wallet</button><div ...="" id="emailInput">
+<div ...="" id="emailInput">
 </div></header>
 <!-- Injected: row (account + balances) -->
 <style>
@@ -1801,6 +1805,26 @@ try {
       emailMsg.style.color = '#ff6b6b';
     }
   });
+    async function connectXaman(){
+  try{
+    const res = await xumm.authorize();
+
+    if(res?.me?.account){
+      window.connectedAccount = res.me.account;
+
+      try{
+        localStorage.setItem('xummAccount', res.me.account);
+      }catch(e){}
+
+      window.location.href = "https://centerforcreators.com/nft-marketplace";
+    }
+
+  }catch(e){
+    console.error("Xaman connect failed", e);
+  }
+}
+document.getElementById('connectBtn').addEventListener('click', connectXaman);
+
 </script>
 </body> 
 </html>
