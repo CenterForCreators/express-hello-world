@@ -1284,28 +1284,6 @@ try {
     } catch(e) { console.error(e); }
   }
 
-  async function connectNow() {
-    try {
-      if (typeof ensureConnected === 'function') {
-        const acc = await ensureConnected();
-        if (acc) {
-          connectedAccount = acc;
-          localStorage.setItem('xummAccount', acc);
-          const el = document.getElementById('connectedAddress');
-          if (el) el.textContent = acc;
-          if (typeof fetchBalances === 'function') {
-            await fetchBalances(acc);
-          }
-        }
-      } else if (window.xumm && typeof xumm.authorize === 'function') {
-        
-    } catch (e) {
-      console.error('Connect error', e);
-      const s = document.getElementById('claimStatus');
-      if (s) s.textContent = 'Connection failed. Please try again.';
-    }
-  }
-
   async function claim() {
     const s = document.getElementById('claimStatus');
     if (!connectedAccount || connectedAccount === 'undefined' || connectedAccount === null) {
@@ -1383,22 +1361,6 @@ try {
             }
           }catch(_){}
           try{
-            // Clear any XUMM-related storage to force QR on reconnect
-            (function(){
-              try{
-                for (var i=0; i<localStorage.length; i++){
-                  var k = localStorage.key(i);
-                  if (/^xumm/i.test(k)) { localStorage.removeItem(k); i--; }
-                }
-              }catch(_){}
-              try{
-                for (var j=0; j<sessionStorage.length; j++){
-                  var s = sessionStorage.key(j);
-                  if (/^xumm/i.test(s)) { sessionStorage.removeItem(s); j--; }
-                }
-              }catch(_){}
-            })();
-          }catch(_){}
 
   // Suppress redundant "connect wallet" alerts if already connected
   (function(){
