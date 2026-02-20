@@ -431,18 +431,7 @@ document.addEventListener('DOMContentLoaded', function(){
         var I=document.getElementById('captchaInput'); if(I) I.value='';
       };
     }
-    const cb=document.getElementById('connectBtn');
-    if (cb && !cb.__bound){
-      cb.addEventListener('click', function(){
-        if (window.connect) return window.connect();
-        if (window.connectXumm) return window.connectXumm();
-        if (window.authorize) return window.authorize();
-       if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
+    
 });
 
       });
@@ -518,14 +507,6 @@ function newCaptcha(){
   const A = document.getElementById('numA'), B = document.getElementById('numB');<script>
 window.CFC = window.CFC || {};
 
-async function connect(){
-  try {
-    if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
 });
 
     if (res?.me?.account){
@@ -573,18 +554,6 @@ function checkCaptcha(){
     var I=document.getElementById('capAns'); if(I) I.value='';
   };
   document.addEventListener('DOMContentLoaded', regenCaptcha);
-
-  // Core actions
-  async function _connect(){
-    try{
-      if (typeof Xumm==='undefined' || !window.xumm){ alert('Wallet SDK loading, try again.'); return; }
-      if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
-});
 
       if (res?.me?.account){
         var acct=document.getElementById('acct'); if(acct) acct.textContent=res.me.account;
@@ -779,18 +748,6 @@ try {
       client.disconnect();
     }catch(e){ console.warn(e); }
   }
-
-  async function doConnect(){
-    try{
-      if(!window.xumm){ alert('Xaman SDK not ready'); return; }
-      setStatus('Connecting…');
-     if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
-});
 
       const ping = await xumm.ping();
       if(ping && ping?.account){ account = ping.account; }
@@ -1028,17 +985,6 @@ try {
     }
   }
 
-  async async function connectXumm(){
-    try{
-      if(window.xumm && window.xumm.authorize){
-       if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
-});
-
         if(res && res.me && res.me.account){
           connectedAccount = res.me.account;
           if(connectBtn){ connectBtn.textContent = "Connected"; connectBtn.disabled = false; }
@@ -1143,17 +1089,6 @@ try {
       await client.disconnect();
     }catch(e){ console.error("balance fetch error", e); }
   }
-
-  async function connectXumm(){
-    try{
-      if(window.xumm && window.xumm.authorize){
-        if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
-});
 
         const addr = res && res.me && res.me.account ? res.me.account : (res && res.account ? res.account : null);
         if(addr) setConnected(addr);
@@ -1283,22 +1218,6 @@ try {
     if (claimBtn) claimBtn.removeAttribute('disabled');
     refreshBalances(address);
   }
-
-  async function handleConnect() {
-    try {
-      // If already connected, just ensure UI is up to date
-      if (connectedAccount && xumm?.user?.account) {
-        applyConnected(connectedAccount);
-        return;
-      }
-      setStatus('Connecting wallet...');
-      if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
-});
 
       // `success` event will update UI
     } catch (e) {
@@ -1438,29 +1357,6 @@ try {
     if (btn) btn.textContent = isR(a) ? 'Disconnect XUMM Wallet' : 'Connect XUMM Wallet';
   }
 
-            // Clear any XUMM-related storage to force QR on reconnect
-            (function(){
-              try{
-                for (var i=0; i<localStorage.length; i++){
-                  var k = localStorage.key(i);
-                  if (/^xumm/i.test(k)) { localStorage.removeItem(k); i--; }
-                }
-              }catch(_){}
-              try{
-                for (var j=0; j<sessionStorage.length; j++){
-                  var s = sessionStorage.key(j);
-                  if (/^xumm/i.test(s)) { sessionStorage.removeItem(s); j--; }
-                }
-              }catch(_){}
-            })();
-          }catch(_){}
-
-          if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
 });
 
           if (me && me.account){
@@ -1726,24 +1622,6 @@ function cleanTexts(){
     
 </script>
 <script id="cfc-connect-and-bindings">
-(function(){
-  if(window._cfcPatched) return; window._cfcPatched = true;
-  const connectBtn = document.getElementById('connectBtn');
-  const claimBtn = document.getElementById('claimBtn');
-  const ans = document.getElementById('capAns');
-  const addrBadge = document.getElementById('addrBadge') || document.getElementById('address') || document.getElementById('walletAddress');
-
-  if(connectBtn){
-    connectBtn.onclick = null;
-    connectBtn.addEventListener('click', async function(){
-      try{
-       if (window.xumm && xumm.authorize) return xumm.authorize().then(res=>{
-  if(res?.me?.account){
-    window.connectedAccount = res.me.account;
-    try{ localStorage.setItem('xummAccount', res.me.account); }catch(e){}
-    window.location.href = "https://centerforcreators.com/nft-marketplace";
-  }
-});
 
           const res = await window.xumm.authorize();
           const acct = (res && (res.account || (res.me && res.me.account))) ? (res.account || res.me.account) : null;
