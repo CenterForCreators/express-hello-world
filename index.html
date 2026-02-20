@@ -985,14 +985,6 @@ try {
     }
   }
 
-  if(connectBtn){
-    connectBtn.addEventListener('click', function(){
-
-  if(connectedAccount){ return; }
-  connectXumm();
-});
-  }
-
   // Provide a global for other handlers (Claim) to know connection
   window.__cfcConnectedAccount = () => connectedAccount;
 
@@ -1003,8 +995,6 @@ try {
       try{
         const acct = connectedAccount;
         if(!acct){
-          // if not connected yet, try to connect once
-          await connectXumm();
         }
         const address = connectedAccount;
         if(!address){
@@ -1077,10 +1067,6 @@ try {
     }catch(e){ console.error("balance fetch error", e); }
   }
 
-  if(connectBtn){
-    connectBtn.addEventListener('click', function(){ if(!connectedAccount) connectXumm(); });
-  }
-
   try{ const prev = sessionStorage.getItem("cfc_addr"); if(isValidR(prev)) setConnected(prev); }catch(e){}
 
   if(window.xumm && window.xumm.on){
@@ -1102,7 +1088,6 @@ try {
   if(claimBtn){
     claimBtn.addEventListener('click', async function(){
       try{
-        if(!isValidR(connectedAccount)){ await connectXumm(); }
         if(!isValidR(connectedAccount)){ return; }
         const payload = { account: connectedAccount, captcha_ok: true };
         const ep = CONFIG.FAUCET_ENDPOINT || "https://cfc-faucet.onrender.com/api/faucet";
@@ -1338,20 +1323,6 @@ try {
     if (btn) btn.textContent = isR(a) ? 'Disconnect XUMM Wallet' : 'Connect XUMM Wallet';
   }
 
-  function connectToggle(){
-    var btn = gid('connect-wallet') || gid('connectXumm') || gid('xummConnect') || gid('connectBtn');
-    if (!btn) return;
-    var clone = btn.cloneNode(true);
-    btn.parentNode.replaceChild(clone, btn);
-    clone.addEventListener('click', async function(e){
-      e.preventDefault();
-      var a = acct();
-      if (isR(a)){
-        try{ localStorage.removeItem('xummAccount'); }catch(e){}
-        if (typeof window.connectedAccount !== 'undefined') window.connectedAccount = null;
-        updateWallet();
-        return;
-      }
       try{
         if (window.xumm && typeof window.xumm.authorize === 'function'){
           // Enhanced full disconnect before returning
