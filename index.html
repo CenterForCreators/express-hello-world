@@ -887,7 +887,32 @@ try {
     try{
       if(!window.Xumm){ console.warn('Xumm SDK not loaded'); return; }
       var x = new Xumm(CFG.XUMM_APP_UUID);
-      x.signIn().then(function(s){
+
+x.payload.createAndSubscribe(
+  { txjson: { TransactionType: 'SignIn' } },
+  function(){ }
+).then(function(sub){
+
+  if (sub?.created?.next?.always) {
+    window.location.href = sub.created.next.always;
+  }
+
+  return sub.resolved;
+
+}).then(function(res){
+
+  if (res?.signed && res?.response?.account) {
+    connectedAccount = res.response.account;
+
+    try {
+      localStorage.setItem('xummAccount', connectedAccount);
+    } catch(e){}
+
+    window.location.href = "https://centerforcreators.com/nft-marketplace";
+  }
+
+});
+
         if (s && s.me && s.me.account){
           connectedAccount = s.me.account;
           var cs = byId('connStatus'); if(cs) cs.textContent='Connected';
