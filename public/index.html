@@ -1002,14 +1002,6 @@ try {
     }
   }
 
-  if(connectBtn){
-    connectBtn.addEventListener('click', function(){
-
-  if(connectedAccount){ return; }
-  connectXumm();
-});
-  }
-
   // Provide a global for other handlers (Claim) to know connection
   window.__cfcConnectedAccount = () => connectedAccount;
 
@@ -1098,10 +1090,6 @@ try {
         if(addr) setConnected(addr);
       }
     }catch(e){ console.error("xumm authorize error", e); }
-  }
-
-  if(connectBtn){
-    connectBtn.addEventListener('click', function(){ if(!connectedAccount) connectXumm(); });
   }
 
   try{ const prev = sessionStorage.getItem("cfc_addr"); if(isValidR(prev)) setConnected(prev); }catch(e){}
@@ -1627,14 +1615,6 @@ function cleanTexts(){
 </script>
 <script id="cfc-connect-and-bindings">
 
-          const res = await window.xumm.authorize();
-          const acct = (res && (res.account || (res.me && res.me.account))) ? (res.account || res.me.account) : null;
-          if(acct){
-            window.connectedAccount = acct;
-            if(connectBtn){ connectBtn.textContent = 'Connected'; connectBtn.disabled = false; }
-            if(addrBadge){ addrBadge.textContent = acct; }
-            if(typeof fetchBalances==='function') fetchBalances(acct);
-          }
         }
       }catch(e){ console.error('Xaman connect error', e); }
     });
